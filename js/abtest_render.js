@@ -37,7 +37,7 @@ function Formatter() {}
 Formatter.prototype = {
     describeNumber: function(number, decimalSpots) {
         if (!decimalSpots) {
-            if (number % 1 == 0) {
+            if (number % 1 === 0) {
                 decimalSpots = 0;
             } else {
                 decimalSpots = 1;
@@ -100,7 +100,7 @@ ResultRowView.prototype = {
 
     renderOutcome: function(pValue, improvement) {
         var pValueText = this._formatter.percent(pValue);
-        if (pValueText == '0%') {
+        if (pValueText === '0%') {
             pValueText = '< 0.01%';
         }
         this._$row.find('.p-value').text(pValueText);
@@ -156,16 +156,16 @@ ResultRowView.prototype = {
         panel.add(pv.Rule)
             .data([overallRange.lowerBound, overallRange.upperBound])
             .visible(function(data) { return data; })
-            .left(function(data) { var l = scale(data); return (this.index == 0) ? l - 1 : l; })
+            .left(function(data) { var l = scale(data); return (this.index === 0) ? l - 1 : l; })
             .top(height / 2 - endMarkHeight / 2)
             .height(endMarkHeight)
             .strokeStyle('#444')
-            .anchor(function() { return (this.index == 0) ? 'left' : 'right'; })
+            .anchor(function() { return (this.index === 0) ? 'left' : 'right'; })
             .add(pv.Label)
             .font('12px "Droid Sans Mono"')
             .textStyle('#444')
             .textBaseline('middle')
-            .text(function() { return (this.index == 0) ? '-' : '+'; });
+            .text(function() { return (this.index === 0) ? '-' : '+'; });
 
         // Center line
         panel.add(pv.Rule)
