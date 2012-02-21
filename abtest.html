@@ -32,40 +32,12 @@
                 </tbody>
             </table>
             <p>
-              <button type="submit" class="submit-button">Compute &raquo;</button>
-              <a href="#" class="add-input-link">Add another trial</a>
+                <button type="submit" class="submit-button">Compute &raquo;</button>
+                <a href="#" class="add-input-link">Add another trial</a>
             </p>
         </form>
 
-        <table id="results" style="display: none">
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>Successes</th>
-                    <th>Total</th>
-                    <th colspan="2">Success Rate</th>
-                    <th>p-value</th>
-                    <th>Improvement</th>
-                </tr>
-            </thead>
-            <tbody class="result-table">
-              <tr class="result-row-template" style="display: none;">
-                <th class="bucket-name"></th>
-                <td class="yes"></td>
-                <td class="total"></td>
-                <td class="conversion-numeric">
-                  <span class="base"></span>
-                  <span class="error">&plusmn; <span></span></span>
-                </td>
-                <td class="conversion-visual"></td>
-                <td class="p-value"></td>
-                <td class="improvement">
-                  <span class="base"></span>
-                  <span class="error">&plusmn; <span></span></span>
-                </td>
-              </tr>
-            </tbody>
-        </table>
+        <div id="results"></div>
 
         <iframe id="hidden-iframe" style="display: none;"></iframe>
     </body>

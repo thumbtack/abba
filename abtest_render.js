@@ -1,5 +1,38 @@
 var BASELINE_ALPHA = 0.05;
 
+var RESULT_ROW_HTML = ' \
+<tr class="result-row"> \
+  <th class="bucket-name"></th> \
+  <td class="yes"></td> \
+  <td class="total"></td> \
+  <td class="conversion-numeric"> \
+    <span class="base"></span> \
+    <span class="error">&plusmn; <span></span></span> \
+  </td> \
+  <td class="conversion-visual"></td> \
+  <td class="p-value"></td> \
+  <td class="improvement"> \
+    <span class="base"></span> \
+    <span class="error">&plusmn; <span></span></span> \
+  </td> \
+</tr>';
+
+var RESULT_TABLE_HTML = ' \
+<table> \
+    <thead> \
+        <tr> \
+            <th></th> \
+            <th>Successes</th> \
+            <th>Total</th> \
+            <th colspan="2">Success Rate</th> \
+            <th>p-value</th> \
+            <th>Improvement</th> \
+        </tr> \
+    </thead> \
+    <tbody class="result-table"> \
+    </tbody> \
+</table>';
+
 function Formatter() {}
 Formatter.prototype = {
     describeNumber: function(number, decimalSpots) {
@@ -149,17 +182,17 @@ ResultRowView.prototype = {
 function ResultsView($container) {
     this._$container = $container;
     this._formatter = new Formatter();
+
+    $container.append(RESULT_TABLE_HTML);
+    $container.hide();
 }
 ResultsView.prototype = {
     addResultRow: function(label) {
         this._$container.show();
 
-        var $resultRow = this._$container.find('.result-row-template')
-            .clone()
-            .removeClass('result-row-template')
-            .addClass('result-row')
-            .show()
-            .appendTo(this._$container.find('.result-table'));
+        var $resultTable = this._$container.find('.result-table');
+        $resultTable.append(RESULT_ROW_HTML);
+        var $resultRow = $resultTable.children().last();
         $resultRow.find('.bucket-name').text(label);
         return new ResultRowView($resultRow, this._formatter);
     },
