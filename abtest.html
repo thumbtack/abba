@@ -5,7 +5,9 @@
         <script src="lib/jquery.min.js"></script>
         <script src="lib/protovis-r3.2.js"></script>
         <script src="lib/hash.js"></script>
-        <script src="abtest.js"></script>
+        <script src="abtest_stats.js"></script>
+        <script src="abtest_render.js"></script>
+        <script src="abtest_app.js"></script>
         <script src="abtest_onload.js"></script>
     </head>
     <body>
@@ -18,8 +20,8 @@
                         <th>Number of trials</th>
                     </tr>
                 </thead>
-                <tbody id="inputs-table">
-                    <tr id="baseline-input-row" class="input-row">
+                <tbody class="inputs-table">
+                    <tr class="input-row baseline-input-row">
                         <td><input type="text" class="label-input" value="Baseline" required /></td>
                         <td><input type="text" class="num-successes-input" required /></td>
                         <td><input type="text" class="num-samples-input" required /></td>
@@ -30,8 +32,8 @@
                 </tbody>
             </table>
             <p>
-              <button type="submit" id="submit-button">Compute &raquo;</button>
-              <a href="#" id="add-input-link">Add another trial</a>
+              <button type="submit" class="submit-button">Compute &raquo;</button>
+              <a href="#" class="add-input-link">Add another trial</a>
             </p>
         </form>
 
@@ -46,8 +48,8 @@
                     <th>Improvement</th>
                 </tr>
             </thead>
-            <tbody id="result-table">
-              <tr id="result-row-template" style="display: none;">
+            <tbody class="result-table">
+              <tr class="result-row-template" style="display: none;">
                 <th class="bucket-name"></th>
                 <td class="yes"></td>
                 <td class="total"></td>
