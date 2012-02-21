@@ -183,7 +183,7 @@ function ResultsView($container) {
     this._$container = $container;
     this._formatter = new Formatter();
 
-    $container.append(RESULT_TABLE_HTML);
+    $container.html(RESULT_TABLE_HTML);
     $container.hide();
 }
 ResultsView.prototype = {

@@ -35,7 +35,7 @@ InputsView.prototype = {
             .show()
             .click(function(event) {
                 event.preventDefault();
-                row.remove();
+                $row.remove();
             });
         return $row;
     },
