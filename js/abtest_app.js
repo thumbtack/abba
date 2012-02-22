@@ -1,8 +1,8 @@
-function InputsView($form, historyIframe) {
+ABTest.InputsView = function($form, historyIframe) {
     this._$form = $form;
     this._historyIframe = historyIframe;
 }
-InputsView.prototype = {
+ABTest.InputsView.prototype = {
     setAddTrialHandler: function(callback) {
         this._$form.find('.add-input-link').click(function(event) {
             event.preventDefault()
@@ -86,12 +86,12 @@ InputsView.prototype = {
     },
 };
 
-function Presenter(abTestClass) {
+ABTest.Presenter = function(abTestClass) {
     this._abTestClass = abTestClass;
     this._inputsView = undefined;
     this._$resultsContainer = undefined;
 }
-Presenter.prototype = {
+ABTest.Presenter.prototype = {
     bind: function(inputsView, $resultsContainer) {
         this._inputsView = inputsView;
         // use of resultsContainer should be very limited, otherwise this class will be untestable

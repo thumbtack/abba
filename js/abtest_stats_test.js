@@ -1,5 +1,5 @@
 describe('NormalDistribution', function() {
-    var normal = new NormalDistribution();
+    var normal = new ABTest.NormalDistribution();
 
     beforeEach(function() {
         this.addMatchers({
@@ -46,7 +46,7 @@ describe('NormalDistribution', function() {
 });
 
 describe('Experiment', function() {
-    var experiment = new Experiment(3, 20, 1000, 0.05);
+    var experiment = new ABTest.Experiment(3, 20, 1000, 0.05);
 
     it('computes the baseline proportion', function() {
         var proportion = experiment.getBaselineProportion();

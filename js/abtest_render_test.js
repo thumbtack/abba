@@ -1,5 +1,5 @@
 describe('Formatter', function() {
-    var formatter = new Formatter();
+    var formatter = new ABTest.Formatter();
 
     it('formats numbers', function() {
         expect(formatter.describeNumber(1234567.89012, 2)).toBe('1,234,567.89');
@@ -24,14 +24,14 @@ describe('ResultsPresenter', function() {
         experimentParams.trialData = [];
 
         this.getBaselineProportion = function() {
-            return new ValueWithInterval(0.5, 0.2);
+            return new ABTest.ValueWithInterval(0.5, 0.2);
         };
 
         this.getResults = function(numSuccesses, numSamples) {
             experimentParams.trialData.push([numSuccesses, numSamples]);
             return {
-                proportion: new ValueWithInterval(0.6, 0.3),
-                relativeImprovement: new ValueWithInterval(1.2, 0.15),
+                proportion: new ABTest.ValueWithInterval(0.6, 0.3),
+                relativeImprovement: new ABTest.ValueWithInterval(1.2, 0.15),
                 pValue: 0.123,
             };
         };
@@ -74,7 +74,7 @@ describe('ResultsPresenter', function() {
     };
 
     var view = undefined;
-    var presenter = new ResultsPresenter(StubExperiment);
+    var presenter = new ABTest.ResultsPresenter(StubExperiment);
 
     beforeEach(function() {
         experimentParams = {};
@@ -131,7 +131,7 @@ describe('ResultsPresenter', function() {
 
 describe('ABTest', function() {
     it('gets raw results', function() {
-        var test = new ABTest('my baseline', 1, 2);
+        var test = new ABTest.ABTest('my baseline', 1, 2);
         test.addTrial('my trial', 3, 4);
         var results = test.getResults();
         expect(results['my baseline'].value).toBe(0.5);

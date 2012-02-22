@@ -80,7 +80,7 @@ describe('Presenter', function() {
 
     var view = undefined;
     var resultsContainer = undefined;
-    var presenter = new Presenter(FakeAbTest);
+    var presenter = new ABTest.Presenter(FakeAbTest);
 
     beforeEach(function() {
         renderedContainer = undefined;
@@ -116,7 +116,7 @@ describe('Presenter', function() {
 
         // "Reload" the app
         view = new FakeView();
-        presenter = new Presenter(FakeAbTest);
+        presenter = new ABTest.Presenter(FakeAbTest);
         presenter.bind(view, resultsContainer);
 
         view.historyCallback(oldView.historyHash);

@@ -1,3 +1,5 @@
+var ABTest = {};
+
 /* Polynomial and rational approximations to standard normal probability functions. From:
 
    Abramowitz, Milton; Stegun, Irene A., eds. (1972), Handbook of Mathematical Functions with
@@ -5,8 +7,8 @@
 
    Available online at http://people.math.sfu.ca/~cbm/aands/
 */
-function NormalDistribution() {}
-NormalDistribution.prototype = {
+ABTest.NormalDistribution = function() {}
+ABTest.NormalDistribution.prototype = {
     density: function(zValue) {
         return 1 / Math.sqrt(2 * Math.PI) * Math.exp(-zValue * zValue / 2);
     },
@@ -74,11 +76,11 @@ NormalDistribution.prototype = {
     },
 };
 
-function ValueWithInterval(value, intervalWidth) {
+ABTest.ValueWithInterval = function(value, intervalWidth) {
     this.value = value;
     this.intervalWidth = intervalWidth;
 }
-ValueWithInterval.prototype = {
+ABTest.ValueWithInterval.prototype = {
     range: function() {
         return {
             lowerBound: this.value - this.intervalWidth,
@@ -88,11 +90,11 @@ ValueWithInterval.prototype = {
 };
 
 // A value with standard error, from which a confidence interval can be derived.
-function ValueWithError(value, error) {
+ABTest.ValueWithError = function(value, error) {
     this.value = value;
     this.error = error;
 }
-ValueWithError.prototype = {
+ABTest.ValueWithError.prototype = {
     /* criticalZValue should be the value at which the right-tail probability for a standard
        normal distribution equals half the desired alpha = 1 - confidence level:
 
@@ -106,39 +108,40 @@ ValueWithError.prototype = {
     },
 
     valueWithInterval: function(criticalZValue) {
-        return new ValueWithInterval(this.value, this.confidenceIntervalWidth(criticalZValue));
+        return new ABTest.ValueWithInterval(this.value,
+                                            this.confidenceIntervalWidth(criticalZValue));
     },
 };
 
 // Represents a binomial proportion with numSuccesses successful samples out of numSamples total.
-function Proportion(numSuccesses, numSamples) {
+ABTest.Proportion = function(numSuccesses, numSamples) {
     this.numSuccesses = numSuccesses;
     this.numSamples = numSamples;
 }
-Proportion.prototype = {
+ABTest.Proportion.prototype = {
     /* Generate an estimate for the underlying probability of success using the maximum likelihood
        estimator and the normal approximation error.
     */
     pEstimate: function() {
         var pEstimate = 1.0 * this.numSuccesses / this.numSamples;
         var standardError = Math.sqrt(pEstimate * (1 - pEstimate) / this.numSamples);
-        return new ValueWithError(pEstimate, standardError);
+        return new ABTest.ValueWithError(pEstimate, standardError);
     },
 };
 
-function ProportionComparison(baseline, trial) {
+ABTest.ProportionComparison = function(baseline, trial) {
     this.baseline = baseline;
     this.trial = trial;
-    this._normal = new NormalDistribution();
+    this._normal = new ABTest.NormalDistribution();
 }
-ProportionComparison.prototype = {
+ABTest.ProportionComparison.prototype = {
     // Generate an estimate of the difference in success rates between the trial and the baseline.
     differenceEstimate: function() {
         var baselineP = this.baseline.pEstimate();
         var trialP = this.trial.pEstimate();
         var difference = trialP.value - baselineP.value;
         var standardError = Math.sqrt(Math.pow(baselineP.error, 2) + Math.pow(trialP.error, 2));
-        return new ValueWithError(difference, standardError);
+        return new ABTest.ValueWithError(difference, standardError);
     },
 
     // Return the difference in sucess rates as a proportion of the baseline success rate.
@@ -146,7 +149,7 @@ ProportionComparison.prototype = {
         var baselineValue = this.baseline.pEstimate().value;
         var ratio = this.differenceEstimate().value / baselineValue;
         var error = this.differenceEstimate().error / baselineValue;
-        return new ValueWithError(ratio, error);
+        return new ABTest.ValueWithError(ratio, error);
     },
 
     /* Perform a large-sample z-test of null hypothesis H0: pBaseline == pTrial against
@@ -158,26 +161,27 @@ ProportionComparison.prototype = {
        "Two-proportion z-test, pooled for d0 = 0".
     */
     zTest: function(zMultiplier) {
-        var pooledStats = new Proportion(this.baseline.numSuccesses + this.trial.numSuccesses,
-                                          this.baseline.numSamples + this.trial.numSamples);
+        var pooledStats = new ABTest.Proportion(
+            this.baseline.numSuccesses + this.trial.numSuccesses,
+            this.baseline.numSamples + this.trial.numSamples);
         var pooledPValue = pooledStats.pEstimate().value;
         var pooledVarianceOfDifference = (
                 pooledPValue * (1 - pooledPValue)
                 * (1.0 / this.baseline.numSamples + 1.0 / this.trial.numSamples));
         var pooledStandardErrorOfDifference = Math.sqrt(pooledVarianceOfDifference);
-        var testZValue = this.differenceEstimate().value / pooledStandardErrorOfDifference;
-        var adjustedOneTailedPValue = this._normal.survival(
-            Math.abs(testZValue * zMultiplier));
+        var testZValue =
+            Math.abs(this.differenceEstimate().value) / pooledStandardErrorOfDifference;
+        var adjustedOneTailedPValue = this._normal.survival(testZValue * zMultiplier);
         return 2 * adjustedOneTailedPValue;
     },
 };
 
 // numTrials: number of trials to be compared to the baseline (i.e., not including the baseline)
-function Experiment(numTrials, baselineNumSuccesses, baselineNumSamples, baseAlpha) {
-    this._normal = new NormalDistribution();
-    this._baseline = new Proportion(baselineNumSuccesses, baselineNumSamples);
+ABTest.Experiment = function(numTrials, baselineNumSuccesses, baselineNumSamples, baseAlpha) {
+    this._normal = new ABTest.NormalDistribution();
+    this._baseline = new ABTest.Proportion(baselineNumSuccesses, baselineNumSamples);
 
-    numComparisons = Math.max(1, numTrials);
+    var numComparisons = Math.max(1, numTrials);
     // all z-values are two-tailed
     var baseZCriticalValue = this._normal.inverseSurvival(baseAlpha / 2);
     var alpha = baseAlpha / numComparisons // Bonferroni correction
@@ -188,21 +192,21 @@ function Experiment(numTrials, baselineNumSuccesses, baselineNumSamples, baseAlp
     // z critical value for confidence interval on individual proportions
     this._trialIntervalZCriticalValue = this._zCriticalValue / Math.sqrt(2)
 }
-Experiment.prototype = {
+ABTest.Experiment.prototype = {
     getBaselineProportion: function() {
         return this._baseline.pEstimate().valueWithInterval(
             this._trialIntervalZCriticalValue);
     },
 
     getResults: function(numSuccesses, numSamples) {
-        var trial = new Proportion(numSuccesses, numSamples);
-        var comparison = new ProportionComparison(this._baseline, trial);
+        var trial = new ABTest.Proportion(numSuccesses, numSamples);
+        var comparison = new ABTest.ProportionComparison(this._baseline, trial);
         return {
             proportion: trial.pEstimate().valueWithInterval(
                 this._trialIntervalZCriticalValue),
             relativeImprovement: comparison.differenceRatio().valueWithInterval(
                 this._zCriticalValue),
-            pValue: comparison.zTest(this._zMultiplier)
+            pValue: comparison.zTest(this._zMultiplier),
         };
     },
 };
