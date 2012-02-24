@@ -1,7 +1,7 @@
 $(function() {
-    var presenter = new ABTest.Presenter(ABTest.ABTest);
+    var presenter = new Abba.Presenter(Abba.Abba);
     presenter.bind(
-        new ABTest.InputsView($('#inputs'), document.getElementById('hidden-iframe')),
+        new Abba.InputsView($('#inputs'), document.getElementById('hidden-iframe')),
         $('#results')
     );
 });

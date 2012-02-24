@@ -10,7 +10,7 @@ function addToBeNearMatcher(object) {
 
 describe('NormalDistribution', function() {
     var MAX_ERROR = 1e-8;
-    var normal = new ABTest.NormalDistribution(1, 2);
+    var normal = new Abba.NormalDistribution(1, 2);
 
     beforeEach(function() {
         addToBeNearMatcher(this);
@@ -59,7 +59,7 @@ describe('NormalDistribution', function() {
 });
 
 describe('BinomialDistribution', function() {
-    var binomial = new ABTest.BinomialDistribution(1000, 0.3);
+    var binomial = new Abba.BinomialDistribution(1000, 0.3);
     var MAX_ERROR = 5e-3;
 
     beforeEach(function() {
@@ -109,7 +109,7 @@ describe('BinomialDistribution', function() {
 });
 
 describe('Experiment', function() {
-    var experiment = new ABTest.Experiment(3, 20, 100, 0.05);
+    var experiment = new Abba.Experiment(3, 20, 100, 0.05);
 
     it('computes the baseline proportion', function() {
         var proportion = experiment.getBaselineProportion();
@@ -129,7 +129,7 @@ describe('Experiment', function() {
     });
 
     it('computes experiment results for large problems', function() {
-        experiment = new ABTest.Experiment(3, 50000, 100000, 0.05);
+        experiment = new Abba.Experiment(3, 50000, 100000, 0.05);
         var results = experiment.getResults(101000, 200000);
         expect(results.pValue).toBeCloseTo(0.0424500);
     });

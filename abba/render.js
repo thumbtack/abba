@@ -1,6 +1,6 @@
-ABTest.BASELINE_ALPHA = 0.05;
+Abba.BASELINE_ALPHA = 0.05;
 
-ABTest.RESULT_ROW_HTML = ' \
+Abba.RESULT_ROW_HTML = ' \
 <tr class="result-row"> \
   <th class="bucket-name"></th> \
   <td class="yes"></td> \
@@ -17,7 +17,7 @@ ABTest.RESULT_ROW_HTML = ' \
   </td> \
 </tr>';
 
-ABTest.RESULT_TABLE_HTML = ' \
+Abba.RESULT_TABLE_HTML = ' \
 <table> \
     <thead> \
         <tr> \
@@ -33,8 +33,8 @@ ABTest.RESULT_TABLE_HTML = ' \
     </tbody> \
 </table>';
 
-ABTest.Formatter = function() {}
-ABTest.Formatter.prototype = {
+Abba.Formatter = function() {}
+Abba.Formatter.prototype = {
     describeNumber: function(number, decimalSpots) {
         if (!decimalSpots) {
             if (number % 1 === 0) {
@@ -80,11 +80,11 @@ ABTest.Formatter.prototype = {
     },
 }
 
-ABTest.ResultRowView = function($row, formatter) {
+Abba.ResultRowView = function($row, formatter) {
     this._$row = $row;
     this._formatter = formatter;
 }
-ABTest.ResultRowView.prototype = {
+Abba.ResultRowView.prototype = {
     _renderInterval: function(valueWithInterval, $container) {
         $container
             .find('.base').text(this._formatter.percent(valueWithInterval.value)).end()
@@ -179,22 +179,22 @@ ABTest.ResultRowView.prototype = {
 };
 
 // Handles all DOM manipulation and event binding
-ABTest.ResultsView = function($container) {
+Abba.ResultsView = function($container) {
     this._$container = $container;
-    this._formatter = new ABTest.Formatter();
+    this._formatter = new Abba.Formatter();
 
-    $container.html(ABTest.RESULT_TABLE_HTML);
+    $container.html(Abba.RESULT_TABLE_HTML);
     $container.hide();
 }
-ABTest.ResultsView.prototype = {
+Abba.ResultsView.prototype = {
     addResultRow: function(label) {
         this._$container.show();
 
         var $resultTable = this._$container.find('.result-table');
-        $resultTable.append(ABTest.RESULT_ROW_HTML);
+        $resultTable.append(Abba.RESULT_ROW_HTML);
         var $resultRow = $resultTable.children().last();
         $resultRow.find('.bucket-name').text(label);
-        return new ABTest.ResultRowView($resultRow, this._formatter);
+        return new Abba.ResultRowView($resultRow, this._formatter);
     },
 
     clearResults: function() {
@@ -204,11 +204,11 @@ ABTest.ResultsView.prototype = {
 };
 
 
-ABTest.ResultsPresenter = function(experimentClass) {
+Abba.ResultsPresenter = function(experimentClass) {
     this._view = undefined;
     this._experimentClass = experimentClass;
 }
-ABTest.ResultsPresenter.prototype = {
+Abba.ResultsPresenter.prototype = {
     bind: function(view) {
         this._view = view;
     },
@@ -217,7 +217,7 @@ ABTest.ResultsPresenter.prototype = {
         var experiment = new this._experimentClass(allInputs.trials.length,
                                                    allInputs.baseline.numSuccesses,
                                                    allInputs.baseline.numSamples,
-                                                   ABTest.BASELINE_ALPHA);
+                                                   Abba.BASELINE_ALPHA);
 
         var baselineProportion = experiment.getBaselineProportion();
         var overallConversionBounds = {lowerBound: baselineProportion.range().lowerBound,
@@ -267,7 +267,7 @@ ABTest.ResultsPresenter.prototype = {
     },
 };
 
-ABTest.ABTest = function(baselineName, baselineNumSuccesses, baselineNumSamples) {
+Abba.Abba = function(baselineName, baselineNumSuccesses, baselineNumSamples) {
     this._baseline = {
         name: baselineName,
         numSuccesses: baselineNumSuccesses,
@@ -275,22 +275,22 @@ ABTest.ABTest = function(baselineName, baselineNumSuccesses, baselineNumSamples)
     };
     this._trials = [];
 }
-ABTest.ABTest.prototype = {
+Abba.Abba.prototype = {
     addTrial: function(name, numSuccesses, numSamples) {
         this._trials.push({name: name, numSuccesses: numSuccesses, numSamples: numSamples});
     },
 
     renderTo: function(container) {
-        var presenter = new ABTest.ResultsPresenter(ABTest.Experiment);
-        presenter.bind(new ABTest.ResultsView($(container)));
+        var presenter = new Abba.ResultsPresenter(Abba.Experiment);
+        presenter.bind(new Abba.ResultsView($(container)));
         presenter.computeAndDisplayResults({baseline: this._baseline, trials: this._trials});
     },
 
     getResults: function() {
-        var experiment = new ABTest.Experiment(this._trials.length,
+        var experiment = new Abba.Experiment(this._trials.length,
                                                this._baseline.numSuccesses,
                                                this._baseline.numSamples,
-                                               ABTest.BASELINE_ALPHA);
+                                               Abba.BASELINE_ALPHA);
         results = {}
         results[this._baseline.name] = experiment.getBaselineProportion();
         this._trials.forEach(function(trial) {

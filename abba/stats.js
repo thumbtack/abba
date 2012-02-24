@@ -1,7 +1,7 @@
-var ABTest = {};
+var Abba = {};
 
 // Friendly wrapper over jStat's normal distribution functions.
-ABTest.NormalDistribution = function(mean, standardDeviation) {
+Abba.NormalDistribution = function(mean, standardDeviation) {
     if (mean === undefined) {
         mean = 0;
     }
@@ -11,7 +11,7 @@ ABTest.NormalDistribution = function(mean, standardDeviation) {
     this.mean = mean;
     this.standardDeviation = standardDeviation;
 };
-ABTest.NormalDistribution.prototype = {
+Abba.NormalDistribution.prototype = {
     density: function(value) {
         return jStat.normal.pdf(value, this.mean, this.standardDeviation);
     },
@@ -46,18 +46,18 @@ ABTest.NormalDistribution.prototype = {
    class could be improved by making it compute exact binomial functions for small cases and fall
    back to the normal approximation for large cases.
 */
-ABTest.BinomialDistribution = function(numSamples, probability) {
+Abba.BinomialDistribution = function(numSamples, probability) {
     this.numSamples = numSamples;
     this.probability = probability;
     this.expectation = numSamples * probability;
     this.standardDeviation = Math.sqrt(this.expectation * (1 - probability));
 
     // normal approximation to this binomial distribution
-    this._normal = new ABTest.NormalDistribution(this.expectation, this.standardDeviation);
+    this._normal = new Abba.NormalDistribution(this.expectation, this.standardDeviation);
     this._lowerTailProbability = this._normal.cdf(-0.5);
     this._upperTailProbability = this._normal.survival(numSamples + 0.5);
 };
-ABTest.BinomialDistribution.prototype = {
+Abba.BinomialDistribution.prototype = {
     mass: function(count) {
         return this._normal.density(count);
     },
@@ -90,11 +90,11 @@ ABTest.BinomialDistribution.prototype = {
     },
 };
 
-ABTest.ValueWithInterval = function(value, intervalWidth) {
+Abba.ValueWithInterval = function(value, intervalWidth) {
     this.value = value;
     this.intervalWidth = intervalWidth;
 }
-ABTest.ValueWithInterval.prototype = {
+Abba.ValueWithInterval.prototype = {
     range: function() {
         return {
             lowerBound: this.value - this.intervalWidth,
@@ -104,11 +104,11 @@ ABTest.ValueWithInterval.prototype = {
 };
 
 // A value with standard error, from which a confidence interval can be derived.
-ABTest.ValueWithError = function(value, error) {
+Abba.ValueWithError = function(value, error) {
     this.value = value;
     this.error = error;
 }
-ABTest.ValueWithError.prototype = {
+Abba.ValueWithError.prototype = {
     /* criticalZValue should be the value at which the right-tail probability for a standard
        normal distribution equals half the desired alpha = 1 - confidence level:
 
@@ -122,40 +122,40 @@ ABTest.ValueWithError.prototype = {
     },
 
     valueWithInterval: function(criticalZValue) {
-        return new ABTest.ValueWithInterval(this.value,
+        return new Abba.ValueWithInterval(this.value,
                                             this.confidenceIntervalWidth(criticalZValue));
     },
 };
 
 // Represents a binomial proportion with numSuccesses successful samples out of numSamples total.
-ABTest.Proportion = function(numSuccesses, numSamples) {
+Abba.Proportion = function(numSuccesses, numSamples) {
     this.numSuccesses = numSuccesses;
     this.numSamples = numSamples;
 }
-ABTest.Proportion.prototype = {
+Abba.Proportion.prototype = {
     /* Generate an estimate for the underlying probability of success using the maximum likelihood
        estimator and the normal approximation error.
     */
     pEstimate: function() {
         var pEstimate = 1.0 * this.numSuccesses / this.numSamples;
         var standardError = Math.sqrt(pEstimate * (1 - pEstimate) / this.numSamples);
-        return new ABTest.ValueWithError(pEstimate, standardError);
+        return new Abba.ValueWithError(pEstimate, standardError);
     },
 };
 
-ABTest.ProportionComparison = function(baseline, trial) {
+Abba.ProportionComparison = function(baseline, trial) {
     this.baseline = baseline;
     this.trial = trial;
-    this._standardNormal = new ABTest.NormalDistribution();
+    this._standardNormal = new Abba.NormalDistribution();
 }
-ABTest.ProportionComparison.prototype = {
+Abba.ProportionComparison.prototype = {
     // Generate an estimate of the difference in success rates between the trial and the baseline.
     differenceEstimate: function() {
         var baselineP = this.baseline.pEstimate();
         var trialP = this.trial.pEstimate();
         var difference = trialP.value - baselineP.value;
         var standardError = Math.sqrt(Math.pow(baselineP.error, 2) + Math.pow(trialP.error, 2));
-        return new ABTest.ValueWithError(difference, standardError);
+        return new Abba.ValueWithError(difference, standardError);
     },
 
     // Return the difference in sucess rates as a proportion of the baseline success rate.
@@ -163,7 +163,7 @@ ABTest.ProportionComparison.prototype = {
         var baselineValue = this.baseline.pEstimate().value;
         var ratio = this.differenceEstimate().value / baselineValue;
         var error = this.differenceEstimate().error / baselineValue;
-        return new ABTest.ValueWithError(ratio, error);
+        return new Abba.ValueWithError(ratio, error);
     },
 
     /* Compute various values useful for comparing proportions with null hypothesis that they have
@@ -225,9 +225,9 @@ ABTest.ProportionComparison.prototype = {
     */
     iteratedTest: function(numTrials, coverageAlpha) {
         var values = this._computeTestValues();
-        var trialDistribution = new ABTest.BinomialDistribution(this.trial.numSamples,
+        var trialDistribution = new Abba.BinomialDistribution(this.trial.numSamples,
                                                                 values.pooledProportion);
-        var baselineDistribution = new ABTest.BinomialDistribution(this.baseline.numSamples,
+        var baselineDistribution = new Abba.BinomialDistribution(this.baseline.numSamples,
                                                                    values.pooledProportion);
 
         // compute smallest and largest differences between success counts that are "at least as
@@ -263,9 +263,9 @@ ABTest.ProportionComparison.prototype = {
 };
 
 // numTrials: number of trials to be compared to the baseline (i.e., not including the baseline)
-ABTest.Experiment = function(numTrials, baselineNumSuccesses, baselineNumSamples, baseAlpha) {
-    normal = new ABTest.NormalDistribution();
-    this._baseline = new ABTest.Proportion(baselineNumSuccesses, baselineNumSamples);
+Abba.Experiment = function(numTrials, baselineNumSuccesses, baselineNumSamples, baseAlpha) {
+    normal = new Abba.NormalDistribution();
+    this._baseline = new Abba.Proportion(baselineNumSuccesses, baselineNumSamples);
 
     this._numComparisons = Math.max(1, numTrials);
     // all z-values are two-tailed
@@ -278,15 +278,15 @@ ABTest.Experiment = function(numTrials, baselineNumSuccesses, baselineNumSamples
     // z critical value for confidence interval on individual proportions
     this._trialIntervalZCriticalValue = this._zCriticalValue / Math.sqrt(2)
 }
-ABTest.Experiment.prototype = {
+Abba.Experiment.prototype = {
     getBaselineProportion: function() {
         return this._baseline.pEstimate().valueWithInterval(
             this._trialIntervalZCriticalValue);
     },
 
     getResults: function(numSuccesses, numSamples) {
-        var trial = new ABTest.Proportion(numSuccesses, numSamples);
-        var comparison = new ABTest.ProportionComparison(this._baseline, trial);
+        var trial = new Abba.Proportion(numSuccesses, numSamples);
+        var comparison = new Abba.ProportionComparison(this._baseline, trial);
         return {
             proportion: trial.pEstimate().valueWithInterval(
                 this._trialIntervalZCriticalValue),
