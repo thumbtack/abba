@@ -1,67 +1,136 @@
+function addToBeNearMatcher(object) {
+    object.addMatchers({
+        // like toBeCloseTo(), but looks at absolute error rather than rounding to a fixed
+        // precision
+        toBeNear: function(expected, maxError) {
+            return Math.abs(this.actual - expected) < maxError;
+        },
+    });
+}
+
 describe('NormalDistribution', function() {
-    var normal = new ABTest.NormalDistribution();
+    var MAX_ERROR = 1e-8;
+    var normal = new ABTest.NormalDistribution(1, 2);
 
     beforeEach(function() {
-        this.addMatchers({
-            // like toBeCloseTo(), but looks at absolute error rather than rounding to some precision
-            toBeNear: function(expected, maxError) {
-                return Math.abs(this.actual - expected) < maxError;
-            },
+        addToBeNearMatcher(this);
+    });
+
+    it('computes density', function() {
+        var expectedDensities = [
+            [1, 0.19947114020071635],
+            [3, 0.12098536225957168],
+            [5, 0.026995483256594031],
+            [-1, 0.12098536225957168],
+        ];
+
+        expectedDensities.forEach(function(values) {
+            expect(normal.density(values[0])).toBeNear(values[1], MAX_ERROR);
         });
     });
 
     it('computes CDFs and survival functions', function() {
-        var MAX_ERROR = 7.5e-8;
+        var expectedCumulativeProbabilities = [
+            [1, 0.5],
+            [3, 0.84134474606854293],
+            [5, 0.97724986805182079],
+            [-1, 1 - 0.84134474606854293],
+        ];
 
-        var expectedCumulativeProbabilities = {};
-        expectedCumulativeProbabilities[0] = 0.5;
-        expectedCumulativeProbabilities[1] = 0.84134474606854293;
-        expectedCumulativeProbabilities[2] = 0.97724986805182079;
-        expectedCumulativeProbabilities[-1] = 1 - expectedCumulativeProbabilities[1];
-
-        for (var zValue in expectedCumulativeProbabilities) {
-            expect(normal.cdf(zValue))
-                .toBeNear(expectedCumulativeProbabilities[zValue], MAX_ERROR);
-            expect(normal.survival(zValue))
-                .toBeNear(1 - expectedCumulativeProbabilities[zValue], MAX_ERROR);
-        }
+        expectedCumulativeProbabilities.forEach(function(values) {
+            expect(normal.cdf(values[0])).toBeNear(values[1], MAX_ERROR);
+            expect(normal.survival(values[0])).toBeNear(1 - values[1], MAX_ERROR);
+        });
     });
 
     it('computes inverse CDFs and survival functions', function() {
-        var MAX_ERROR = 4.5e-4;
+        var expectedValues = [
+            [0.5, 1],
+            [0.75, 2.3489795003921632],
+            [0.95, 4.2897072539029448],
+            [0.05, 1 - 3.2897072539029448],
+        ];
 
-        var expectedZValues = {};
-        expectedZValues[0.5] = 0;
-        expectedZValues[0.75] = 0.67448975019608171;
-        expectedZValues[0.95] = 1.6448536269514729;
-        expectedZValues[0.05] = -expectedZValues[0.95];
+        expectedValues.forEach(function(values) {
+            expect(normal.inverseCdf(values[0])).toBeNear(values[1], MAX_ERROR);
+            expect(normal.inverseSurvival(values[0])).toBeNear(1 - (values[1] - 1), MAX_ERROR);
+        });
+    });
+});
 
-        for (var probability in expectedZValues) {
-            expect(normal.inverseCdf(probability))
-                .toBeNear(expectedZValues[probability], MAX_ERROR);
-            expect(normal.inverseSurvival(probability))
-                .toBeNear(-expectedZValues[probability], MAX_ERROR);
-        }
+describe('BinomialDistribution', function() {
+    var binomial = new ABTest.BinomialDistribution(1000, 0.3);
+    var MAX_ERROR = 5e-3;
+
+    beforeEach(function() {
+        addToBeNearMatcher(this);
+    });
+
+    it('computes mass', function() {
+        var expectedMass = [
+            [300, 0.02752100382127079],
+            [310, 0.02152338347988187],
+            [340, 0.00064472915988537168],
+            [280, 0.01070077909763107],
+        ];
+
+        expectedMass.forEach(function(values) {
+            expect(binomial.mass(values[0])).toBeNear(values[1], MAX_ERROR);
+        });
+    });
+
+    it('computes CDFs and survival functions', function() {
+        var expectedCumulativeProbabilities = [
+            [300, 0.51559351981313983],
+            [310, 0.76630504342015282],
+            [340, 0.99716213728136105],
+            [280, 0.088579522605989086],
+        ];
+
+        expectedCumulativeProbabilities.forEach(function(values) {
+            expect(binomial.cdf(values[0])).toBeNear(values[1], MAX_ERROR);
+            expect(binomial.survival(values[0])).toBeNear(1 - values[1], MAX_ERROR);
+        });
+    });
+
+    it('computes inverse CDFs and survival functions', function() {
+        var expectedValues = [
+            [0.5, 300],
+            [0.75, 310],
+            [0.95, 324],
+            [0.05, 276],
+        ];
+
+        expectedValues.forEach(function(values) {
+            expect(binomial.inverseCdf(values[0])).toBeNear(values[1], 0.5);
+            expect(binomial.inverseSurvival(values[0])).toBeNear(300 - (values[1] - 300), 0.5);
+        });
     });
 });
 
 describe('Experiment', function() {
-    var experiment = new ABTest.Experiment(3, 20, 1000, 0.05);
+    var experiment = new ABTest.Experiment(3, 20, 100, 0.05);
 
     it('computes the baseline proportion', function() {
         var proportion = experiment.getBaselineProportion();
-        expect(proportion.value).toBe(0.02);
-        expect(proportion.intervalWidth).toBeCloseTo(0.0074957);
-        expect(proportion.range().lowerBound).toBeCloseTo(0.0125043);
-        expect(proportion.range().upperBound).toBeCloseTo(0.0274957);
+        expect(proportion.value).toBe(0.2);
+        //expect(proportion.intervalWidth).toBeCloseTo(0.0074957);
+        //expect(proportion.range().lowerBound).toBeCloseTo(0.0125043);
+        //expect(proportion.range().upperBound).toBeCloseTo(0.0274957);
     });
 
     it('computes experiment results', function() {
-        var results = experiment.getResults(50, 2000);
-        expect(results.proportion.value).toBeCloseTo(0.025);
-        expect(results.proportion.intervalWidth).toBeCloseTo(0.0059097);
-        expect(results.relativeImprovement.value).toBeCloseTo(0.25);
-        expect(results.relativeImprovement.intervalWidth).toBeCloseTo(0.6748677);
-        expect(results.pValue).toBeCloseTo(0.4838344);
+        var results = experiment.getResults(50, 150);
+        expect(results.proportion.value).toBeCloseTo(0.333333);
+        //expect(results.proportion.intervalWidth).toBeCloseTo(0.0059097);
+        expect(results.relativeImprovement.value).toBeCloseTo(0.6666667);
+        //expect(results.relativeImprovement.intervalWidth).toBeCloseTo(0.6748677);
+        expect(results.pValue).toBeCloseTo(0.0781727);
+    });
+
+    it('computes experiment results for large problems', function() {
+        experiment = new ABTest.Experiment(3, 50000, 100000, 0.05);
+        var results = experiment.getResults(101000, 200000);
+        expect(results.pValue).toBeCloseTo(0.0424500);
     });
 });

@@ -1,78 +1,92 @@
 var ABTest = {};
 
-/* Polynomial and rational approximations to standard normal probability functions. From:
-
-   Abramowitz, Milton; Stegun, Irene A., eds. (1972), Handbook of Mathematical Functions with
-   Formulas, Graphs, and Mathematical Tables, New York: Dover Publications, ISBN 978-0-486-61272-0
-
-   Available online at http://people.math.sfu.ca/~cbm/aands/
-*/
-ABTest.NormalDistribution = function() {}
+// Friendly wrapper over jStat's normal distribution functions.
+ABTest.NormalDistribution = function(mean, standardDeviation) {
+    if (mean === undefined) {
+        mean = 0;
+    }
+    if (standardDeviation === undefined) {
+        standardDeviation = 1;
+    }
+    this.mean = mean;
+    this.standardDeviation = standardDeviation;
+};
 ABTest.NormalDistribution.prototype = {
-    density: function(zValue) {
-        return 1 / Math.sqrt(2 * Math.PI) * Math.exp(-zValue * zValue / 2);
+    density: function(value) {
+        return jStat.normal.pdf(value, this.mean, this.standardDeviation);
     },
 
-    // Returns P(x < zValue) for x standard normal. zValue may be any number.
-    cdf: function(zValue) {
-        // Formula 26.2.17, http://people.math.sfu.ca/~cbm/aands/page932.htm
-        // Valid for zValue >= 0, abs(error) < 7.5 x 10^-8
-        var p = 0.2316419;
-        var b1 = 0.319381530;
-        var b2 = -0.356563782;
-        var b3 = 1.781477937;
-        var b4 = -1.821255978;
-        var b5 = 1.330274429;
-
-        var isInverted = false;
-        if (zValue < 0) {
-            zValue = -zValue;
-            isInverted = true;
-        }
-
-        var t = 1 / (1 + p * zValue);
-        var density = this.density(zValue);
-        var probability = 1 - density * t * (b1 + t * (b2 + t * (b3 + t * (b4 + t * b5))));
-        if (isInverted) {
-            probability = 1 - probability;
-        }
-        return probability;
+    // Returns P(x < value) for x standard normal. value may be any number.
+    cdf: function(value) {
+        return jStat.normal.cdf(value, this.mean, this.standardDeviation);
     },
 
-    // Returns P(x > zValue) for x standard normal. zValue may be any number.
-    survival: function(zValue) {
-        return 1 - this.cdf(zValue);
-    },
-
-    // Returns z such that P(x > z) = probability for x standard normal.
-    // probability must be in (0, 1).
-    inverseSurvival: function(probability) {
-        // Formula 26.2.23, http://people.math.sfu.ca/~cbm/aands/page933.htm
-        // Valid for 0 < probability <= 0.5, abs(error) < 4.5 x 10^-4
-        var c0 = 2.515517;
-        var c1 = 0.802853;
-        var c2 = 0.010328;
-        var d1 = 1.432788;
-        var d2 = 0.189269;
-        var d3 = 0.001308;
-
-        var multiplier = 1;
-        if (probability > 0.5) {
-            probability = 1 - probability;
-            multiplier = -1;
-        }
-
-        var t = Math.sqrt(
-            Math.log(1 / (probability * probability))
-        );
-        var zEstimate = t - (c0 + t * (c1 + t * c2)) / (1 + t * (d1 + t * (d2 + t * d3)));
-        return zEstimate * multiplier;
+    // Returns P(x > value) for x standard normal. value may be any number.
+    survival: function(value) {
+        return 1 - this.cdf(value);
     },
 
     // Returns z such that P(x < z) = probability for x standard normal.
     // probability must be in (0, 1).
     inverseCdf: function(probability) {
-        return -this.inverseSurvival(probability);
+        return jStat.normal.inv(probability, this.mean, this.standardDeviation);
+    },
+
+    // Returns z such that P(x > z) = probability for x standard normal.
+    // probability must be in (0, 1).
+    inverseSurvival: function(probability) {
+        return this.mean - (this.inverseCdf(probability) - this.mean);
+    },
+};
+
+/* Distribution functions for the binomial distribution. Relies entirely on the normal
+   approximation.
+
+   jStat's binomial functions do not seem be to reliable or as performant for large cases. This
+   class could be improved by making it compute exact binomial functions for small cases and fall
+   back to the normal approximation for large cases.
+*/
+ABTest.BinomialDistribution = function(numSamples, probability) {
+    this.numSamples = numSamples;
+    this.probability = probability;
+    this.expectation = numSamples * probability;
+    this.standardDeviation = Math.sqrt(this.expectation * (1 - probability));
+
+    // normal approximation to this binomial distribution
+    this._normal = new ABTest.NormalDistribution(this.expectation, this.standardDeviation);
+    this._lowerTailProbability = this._normal.cdf(-0.5);
+    this._upperTailProbability = this._normal.survival(numSamples + 0.5);
+};
+ABTest.BinomialDistribution.prototype = {
+    mass: function(count) {
+        return this._normal.density(count);
+    },
+
+    _rescaleProbability: function(probability) {
+        return probability / (1 - this._lowerTailProbability - this._upperTailProbability);
+    },
+
+    cdf: function(count) {
+        if (count < 0) {
+            return 0;
+        } else if (count >= this.numSamples) {
+            return 1;
+        } else {
+            return this._rescaleProbability(
+                this._normal.cdf(count + 0.5) - this._lowerTailProbability);
+        }
+    },
+
+    survival: function(count) {
+        return 1 - this.cdf(count);
+    },
+
+    inverseCdf: function(probability) {
+        return Math.max(0, Math.min(this.numSamples, this._normal.inverseCdf(probability)));
+    },
+
+    inverseSurvival: function(probability) {
+        return Math.max(0, Math.min(this.numSamples, this._normal.inverseSurvival(probability)));
     },
 };
 
@@ -132,7 +146,7 @@ ABTest.Proportion.prototype = {
 ABTest.ProportionComparison = function(baseline, trial) {
     this.baseline = baseline;
     this.trial = trial;
-    this._normal = new ABTest.NormalDistribution();
+    this._standardNormal = new ABTest.NormalDistribution();
 }
 ABTest.ProportionComparison.prototype = {
     // Generate an estimate of the difference in success rates between the trial and the baseline.
@@ -152,40 +166,112 @@ ABTest.ProportionComparison.prototype = {
         return new ABTest.ValueWithError(ratio, error);
     },
 
-    /* Perform a large-sample z-test of null hypothesis H0: pBaseline == pTrial against
-       alternative hypothesis H1: pBaseline < pTrial.  Return the (one-tailed) p-value.
-
-       zMultiplier: test z-value will be multiplied by this factor before computing a p-value.
-
-       See http://en.wikipedia.org/wiki/Statistical_hypothesis_testing#Common_test_statistics,
-       "Two-proportion z-test, pooled for d0 = 0".
+    /* Compute various values useful for comparing proportions with null hypothesis that they have
+       the same probability of success
     */
-    zTest: function(zMultiplier) {
-        var pooledStats = new ABTest.Proportion(
-            this.baseline.numSuccesses + this.trial.numSuccesses,
-            this.baseline.numSamples + this.trial.numSamples);
-        var pooledPValue = pooledStats.pEstimate().value;
-        var pooledVarianceOfDifference = (
-                pooledPValue * (1 - pooledPValue)
-                * (1.0 / this.baseline.numSamples + 1.0 / this.trial.numSamples));
-        var pooledStandardErrorOfDifference = Math.sqrt(pooledVarianceOfDifference);
-        var testZValue =
-            Math.abs(this.differenceEstimate().value) / pooledStandardErrorOfDifference;
-        var adjustedOneTailedPValue = this._normal.survival(testZValue * zMultiplier);
-        return 2 * adjustedOneTailedPValue;
+    _computeTestValues: function() {
+        var pooledProportion =
+            (this.baseline.numSuccesses + this.trial.numSuccesses)
+            / (this.baseline.numSamples + this.trial.numSamples);
+        var expectedDifference =
+            pooledProportion * (this.trial.numSamples - this.baseline.numSamples);
+        var observedDifference = this.trial.numSuccesses - this.baseline.numSuccesses;
+        return {
+            pooledProportion: pooledProportion,
+            expectedDifference: expectedDifference,
+            varianceOfDifference:
+                pooledProportion * (1 - pooledProportion)
+                * (this.baseline.numSamples + this.trial.numSamples),
+            observedAbsoluteDeviation: Math.abs(observedDifference - expectedDifference),
+        };
+    },
+
+    /* For the given binomial distribution, compute an interval that covers at least
+       (1 - coverageAlpha) of the total probability mass, centered at the expectation (unless we're
+       at the boundary). Uses the normal approximation.
+    */
+    _binomialCoverageInterval: function(distribution, coverageAlpha) {
+        if (distribution.numSamples < 1000) {
+            // don't even bother trying to optimize for small-ish sample sizes
+            return [0, distribution.numSamples];
+        } else {
+            return [
+                Math.floor(distribution.inverseCdf(coverageAlpha / 2)),
+                Math.ceil(distribution.inverseSurvival(coverageAlpha / 2)),
+            ];
+        }
+    },
+
+    /* Given the probability of an event, compute the probability that it happens at least once in
+       numTimes independent trials. This is used to adjust a p-value for multiple comparisons.
+       When used to adjust alpha instead, this is called a Sidak correction (the logic is the same,
+       the formula is inverted):
+
+       http://en.wikipedia.org/wiki/Bonferroni_correction#.C5.A0id.C3.A1k_correction
+    */
+    _probabilityUnion: function(probability, numTimes) {
+        return 1 - Math.pow(1 - probability, numTimes);
+    },
+
+    /* Compute a p-value testing null hypothesis H0: pBaseline == pTrial against alternative
+       hypothesis H1: pBaseline != pTrial by summing p-values conditioned on individual baseline
+       success counts. This provides a more accurate correction for multiple testing but scales like
+       O(sqrt(this.baseline.numSamples)), so can eventually get slow. In that case we fall back to
+       zTest().
+
+       Lower coverageAlpha increases accuracy at the cost of longer runtime. Roughly, the result
+       will be accurate within no more than coverageAlpha (but this ignores error due to the normal
+       approximation so isn't guaranteed).
+    */
+    iteratedTest: function(numTrials, coverageAlpha) {
+        var values = this._computeTestValues();
+        var trialDistribution = new ABTest.BinomialDistribution(this.trial.numSamples,
+                                                                values.pooledProportion);
+        var baselineDistribution = new ABTest.BinomialDistribution(this.baseline.numSamples,
+                                                                   values.pooledProportion);
+
+        // compute smallest and largest differences between success counts that are "at least as
+        // extreme" as the observed difference (the observed difference is equal to one of these)
+        var minExtremeDifference =
+            Math.floor(values.expectedDifference - values.observedAbsoluteDeviation);
+        var maxExtremeDifference =
+            Math.ceil(values.expectedDifference + values.observedAbsoluteDeviation);
+
+        var baselineLimits = this._binomialCoverageInterval(baselineDistribution, coverageAlpha);
+        var pValue = 0;
+        for (var baselineSuccesses = baselineLimits[0];
+             baselineSuccesses <= baselineLimits[1];
+             baselineSuccesses++) {
+            // p-value of trial success counts "at least as extreme" for this particular baseline
+            // success count
+            var pValueAtBaseline =
+                trialDistribution.cdf(baselineSuccesses + minExtremeDifference)
+                + trialDistribution.survival(baselineSuccesses + maxExtremeDifference - 1);
+
+            // this is exact because we're conditioning on the baseline count, so the multiple
+            // trials are independent.
+            var adjustedPValue = this._probabilityUnion(pValueAtBaseline, numTrials);
+
+            var baselineProbability = baselineDistribution.mass(baselineSuccesses);
+            pValue += baselineProbability * adjustedPValue;
+        }
+
+        // the remaining baseline values we didn't cover contribute less than coverageAlpha to the
+        // sum, so adding that amount gives us a conservative upper bound.
+        return pValue + coverageAlpha;
     },
 };
 
 // numTrials: number of trials to be compared to the baseline (i.e., not including the baseline)
 ABTest.Experiment = function(numTrials, baselineNumSuccesses, baselineNumSamples, baseAlpha) {
-    this._normal = new ABTest.NormalDistribution();
+    normal = new ABTest.NormalDistribution();
     this._baseline = new ABTest.Proportion(baselineNumSuccesses, baselineNumSamples);
 
-    var numComparisons = Math.max(1, numTrials);
+    this._numComparisons = Math.max(1, numTrials);
     // all z-values are two-tailed
-    var baseZCriticalValue = this._normal.inverseSurvival(baseAlpha / 2);
-    var alpha = baseAlpha / numComparisons // Bonferroni correction
-    this._zCriticalValue = this._normal.inverseSurvival(alpha / 2);
+    var baseZCriticalValue = normal.inverseSurvival(baseAlpha / 2);
+    var alpha = baseAlpha / this._numComparisons // Bonferroni correction
+    this._zCriticalValue = normal.inverseSurvival(alpha / 2);
     // to normalize for multiple testing, rather than scaling the hypothesis test's p-value, we
     // scale the z-value by this amount
     this._zMultiplier = baseZCriticalValue / this._zCriticalValue;
@@ -206,7 +292,7 @@ ABTest.Experiment.prototype = {
                 this._trialIntervalZCriticalValue),
             relativeImprovement: comparison.differenceRatio().valueWithInterval(
                 this._zCriticalValue),
-            pValue: comparison.zTest(this._zMultiplier),
+            pValue: comparison.iteratedTest(this._numComparisons, 1e-5),
         };
     },
 };
