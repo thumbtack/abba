@@ -131,28 +131,55 @@ Abba.ValueWithError.prototype = {
 Abba.Proportion = function(numSuccesses, numSamples) {
     this.numSuccesses = numSuccesses;
     this.numSamples = numSamples;
+    this._binomial = new Abba.BinomialDistribution(numSamples, numSuccesses / numSamples);
 }
 Abba.Proportion.prototype = {
+    // Compute an estimate of the underlying probability of success.
+    pEstimate: function(zCriticalValue) {
+        return this._adjustedWaldEstimate(zCriticalValue);
+    },
+
     /* Generate an estimate for the underlying probability of success using the maximum likelihood
-       estimator and the normal approximation error.
+       estimator and the normal approximation error.  This is the so-called Wald interval:
+
+       http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Normal_approximation_interval
     */
-    pEstimate: function() {
-        var pEstimate = 1.0 * this.numSuccesses / this.numSamples;
-        var standardError = Math.sqrt(pEstimate * (1 - pEstimate) / this.numSamples);
-        return new Abba.ValueWithError(pEstimate, standardError);
+    _waldEstimate: function() {
+        return new Abba.ValueWithError(this._binomial.probability, this._binomial.standardError);
+    },
+
+    /* Compute the "adjusted Wald interval", which can be thought of as a Wald interval with
+       (zCriticalValue^2 / 2) added to the number of successes and the number of failures. The
+       estimated probability of success is the center of the interval. This provides much better
+       coverage than the Wald interval (and many other intervals), though it has the unintuitive
+       property that the estimated probabilty is not numSuccesses / numSamples. See (section 1.4.2
+       and problem 1.24):
+
+       Agresti, Alan. Categorical data analysis. New York, NY: John Wiley & Sons; 2002.
+    */
+    _adjustedWaldEstimate: function(zCriticalValue) {
+        var squaredZCriticalValue = zCriticalValue * zCriticalValue;
+        var adjustedNumSamples = this.numSamples + squaredZCriticalValue;
+        var adjustedBinomial = new Abba.BinomialDistribution(
+            adjustedNumSamples,
+            (this.numSuccesses + squaredZCriticalValue / 2) / adjustedNumSamples);
+        return new Abba.ValueWithError(
+            adjustedBinomial.probability,
+            adjustedBinomial.standardDeviation / adjustedBinomial.numSamples);
     },
 };
 
-Abba.ProportionComparison = function(baseline, trial) {
+Abba.ProportionComparison = function(baseline, trial, zCriticalValue) {
     this.baseline = baseline;
     this.trial = trial;
+    this._zCriticalValue = zCriticalValue;
     this._standardNormal = new Abba.NormalDistribution();
 }
 Abba.ProportionComparison.prototype = {
     // Generate an estimate of the difference in success rates between the trial and the baseline.
     differenceEstimate: function() {
-        var baselineP = this.baseline.pEstimate();
-        var trialP = this.trial.pEstimate();
+        var baselineP = this.baseline.pEstimate(this._zCriticalValue);
+        var trialP = this.trial.pEstimate(this._zCriticalValue);
         var difference = trialP.value - baselineP.value;
         var standardError = Math.sqrt(Math.pow(baselineP.error, 2) + Math.pow(trialP.error, 2));
         return new Abba.ValueWithError(difference, standardError);
@@ -160,7 +187,7 @@ Abba.ProportionComparison.prototype = {
 
     // Return the difference in sucess rates as a proportion of the baseline success rate.
     differenceRatio: function() {
-        var baselineValue = this.baseline.pEstimate().value;
+        var baselineValue = this.baseline.pEstimate(this._zCriticalValue).value;
         var ratio = this.differenceEstimate().value / baselineValue;
         var error = this.differenceEstimate().error / baselineValue;
         return new Abba.ValueWithError(ratio, error);
@@ -272,23 +299,24 @@ Abba.Experiment = function(numTrials, baselineNumSuccesses, baselineNumSamples, 
     var baseZCriticalValue = normal.inverseSurvival(baseAlpha / 2);
     var alpha = baseAlpha / this._numComparisons // Bonferroni correction
     this._zCriticalValue = normal.inverseSurvival(alpha / 2);
-    // to normalize for multiple testing, rather than scaling the hypothesis test's p-value, we
-    // scale the z-value by this amount
-    this._zMultiplier = baseZCriticalValue / this._zCriticalValue;
-    // z critical value for confidence interval on individual proportions
+    // z critical value for confidence interval on individual proportions. We compute intervals with
+    // confidence level < alpha for individual trial proportions, so that they correspond neatly to
+    // the confidence interval on the difference (which is computed at confidence level alpha). This
+    // happens because some of the relative error disappears when we subtract the two proportions.
     this._trialIntervalZCriticalValue = this._zCriticalValue / Math.sqrt(2)
 }
 Abba.Experiment.prototype = {
     getBaselineProportion: function() {
-        return this._baseline.pEstimate().valueWithInterval(
+        return this._baseline.pEstimate(this._trialIntervalZCriticalValue).valueWithInterval(
             this._trialIntervalZCriticalValue);
     },
 
     getResults: function(numSuccesses, numSamples) {
         var trial = new Abba.Proportion(numSuccesses, numSamples);
-        var comparison = new Abba.ProportionComparison(this._baseline, trial);
+        var comparison = new Abba.ProportionComparison(
+            this._baseline, trial, this._trialIntervalZCriticalValue);
         return {
-            proportion: trial.pEstimate().valueWithInterval(
+            proportion: trial.pEstimate(this._trialIntervalZCriticalValue).valueWithInterval(
                 this._trialIntervalZCriticalValue),
             relativeImprovement: comparison.differenceRatio().valueWithInterval(
                 this._zCriticalValue),

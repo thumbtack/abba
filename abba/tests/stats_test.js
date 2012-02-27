@@ -113,18 +113,18 @@ describe('Experiment', function() {
 
     it('computes the baseline proportion', function() {
         var proportion = experiment.getBaselineProportion();
-        expect(proportion.value).toBe(0.2);
-        //expect(proportion.intervalWidth).toBeCloseTo(0.0074957);
-        //expect(proportion.range().lowerBound).toBeCloseTo(0.0125043);
-        //expect(proportion.range().upperBound).toBeCloseTo(0.0274957);
+        expect(proportion.value).toBeCloseTo(0.20835722);
+        expect(proportion.intervalWidth).toBeCloseTo(0.06778590);
+        expect(proportion.range().lowerBound).toBeCloseTo(0.14057132);
+        expect(proportion.range().upperBound).toBeCloseTo(0.27614312);
     });
 
     it('computes experiment results', function() {
         var results = experiment.getResults(50, 150);
-        expect(results.proportion.value).toBeCloseTo(0.333333);
-        //expect(results.proportion.intervalWidth).toBeCloseTo(0.0059097);
-        expect(results.relativeImprovement.value).toBeCloseTo(0.6666667);
-        //expect(results.relativeImprovement.intervalWidth).toBeCloseTo(0.6748677);
+        expect(results.proportion.value).toBeCloseTo(0.33645761);
+        expect(results.proportion.intervalWidth).toBeCloseTo(0.06469193);
+        expect(results.relativeImprovement.value).toBeCloseTo(0.61481138);
+        expect(results.relativeImprovement.intervalWidth).toBeCloseTo(0);
         expect(results.pValue).toBeCloseTo(0.0781727);
     });
 
