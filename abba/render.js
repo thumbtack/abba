@@ -58,7 +58,9 @@ Abba.Formatter.prototype = {
     },
 
     _round: function(value, places) {
-        return value.toFixed(places);
+        var factor = Math.pow(10, places);
+        return Math.round(value * factor) / factor;
+
     },
 
     _getDefaultPlaces: function(ratio) {
@@ -76,6 +78,14 @@ Abba.Formatter.prototype = {
             places = this._getDefaultPlaces(ratio);
         }
         return this._round(100 * ratio, places) + '%';
+    },
+
+    formatPValue: function(pValue) {
+        if (pValue < 0.0001) {
+            return '< 0.01%';
+        } else {
+            return (100 * pValue).toFixed(this._getDefaultPlaces(pValue)) + '%';
+        }
     },
 }
 
@@ -98,13 +108,7 @@ Abba.ResultRowView.prototype = {
     },
 
     renderOutcome: function(pValue, improvement) {
-        var pValueText;
-        if (pValue < 0.0001) {
-            pValueText = '< 0.01%';
-        } else {
-            pValueText = this._formatter.percent(pValue);
-        }
-        this._$row.find('.p-value').text(pValueText);
+        this._$row.find('.p-value').text(this._formatter.formatPValue(pValue));
         this._renderInterval(improvement, this._$row.find('.improvement'));
     },
 
