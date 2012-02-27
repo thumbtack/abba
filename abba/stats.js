@@ -122,8 +122,7 @@ Abba.ValueWithError.prototype = {
     },
 
     valueWithInterval: function(criticalZValue) {
-        return new Abba.ValueWithInterval(this.value,
-                                            this.confidenceIntervalWidth(criticalZValue));
+        return new Abba.ValueWithInterval(this.value, this.confidenceIntervalWidth(criticalZValue));
     },
 };
 
@@ -253,9 +252,9 @@ Abba.ProportionComparison.prototype = {
     iteratedTest: function(numTrials, coverageAlpha) {
         var values = this._computeTestValues();
         var trialDistribution = new Abba.BinomialDistribution(this.trial.numSamples,
-                                                                values.pooledProportion);
+                                                              values.pooledProportion);
         var baselineDistribution = new Abba.BinomialDistribution(this.baseline.numSamples,
-                                                                   values.pooledProportion);
+                                                                 values.pooledProportion);
 
         // compute smallest and largest differences between success counts that are "at least as
         // extreme" as the observed difference (the observed difference is equal to one of these)

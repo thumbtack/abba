@@ -288,9 +288,9 @@ Abba.Abba.prototype = {
 
     getResults: function() {
         var experiment = new Abba.Experiment(this._trials.length,
-                                               this._baseline.numSuccesses,
-                                               this._baseline.numSamples,
-                                               Abba.BASELINE_ALPHA);
+                                             this._baseline.numSuccesses,
+                                             this._baseline.numSamples,
+                                             Abba.BASELINE_ALPHA);
         results = {}
         results[this._baseline.name] = experiment.getBaselineProportion();
         this._trials.forEach(function(trial) {
