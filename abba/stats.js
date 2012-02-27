@@ -1,4 +1,4 @@
-var Abba = {};
+var Abba = (function(Abba, jStat) {
 
 // Friendly wrapper over jStat's normal distribution functions.
 Abba.NormalDistribution = function(mean, standardDeviation) {
@@ -300,3 +300,6 @@ Abba.Experiment.prototype = {
         };
     },
 };
+
+return Abba;
+}(Abba || {}, jStat));

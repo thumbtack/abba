@@ -1,3 +1,5 @@
+var Abba = (function(Abba, $, pv) {
+
 Abba.BASELINE_ALPHA = 0.05;
 
 Abba.RESULT_ROW_HTML = ' \
@@ -304,3 +306,6 @@ Abba.Abba.prototype = {
         return results;
     },
 };
+
+return Abba;
+}(Abba || {}, jQuery, pv));

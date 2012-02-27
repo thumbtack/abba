@@ -1,3 +1,5 @@
+var Abba = (function(Abba, $, Hash) {
+
 Abba.InputsView = function($form, historyIframe) {
     this._$form = $form;
     this._historyIframe = historyIframe;
@@ -184,3 +186,6 @@ Abba.Presenter.prototype = {
         }
     },
 };
+
+return Abba;
+}(Abba || {}, jQuery, Hash));
