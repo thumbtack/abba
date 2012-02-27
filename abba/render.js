@@ -58,8 +58,7 @@ Abba.Formatter.prototype = {
     },
 
     _round: function(value, places) {
-        var factor = Math.pow(10, places);
-        return Math.round(value * factor) / factor;
+        return value.toFixed(places);
     },
 
     _getDefaultPlaces: function(ratio) {
@@ -99,9 +98,11 @@ Abba.ResultRowView.prototype = {
     },
 
     renderOutcome: function(pValue, improvement) {
-        var pValueText = this._formatter.percent(pValue);
-        if (pValueText === '0%') {
+        var pValueText;
+        if (pValue < 0.0001) {
             pValueText = '< 0.01%';
+        } else {
+            pValueText = this._formatter.percent(pValue);
         }
         this._$row.find('.p-value').text(pValueText);
         this._renderInterval(improvement, this._$row.find('.improvement'));
