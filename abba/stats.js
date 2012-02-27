@@ -59,7 +59,11 @@ Abba.BinomialDistribution = function(numSamples, probability) {
 };
 Abba.BinomialDistribution.prototype = {
     mass: function(count) {
-        return this._normal.density(count);
+        if (this.numSamples < 100) {
+            return jStat.binomial.pdf(count, this.numSamples, this.probability);
+        } else {
+            return this._normal.density(count);
+        }
     },
 
     _rescaleProbability: function(probability) {
@@ -71,6 +75,8 @@ Abba.BinomialDistribution.prototype = {
             return 0;
         } else if (count >= this.numSamples) {
             return 1;
+        } else if (this.numSamples < 100) {
+            return jStat.binomial.cdf(count, this.numSamples, this.probability);
         } else {
             return this._rescaleProbability(
                 this._normal.cdf(count + 0.5) - this._lowerTailProbability);
@@ -133,21 +139,9 @@ Abba.Proportion = function(numSuccesses, numSamples) {
     this._binomial = new Abba.BinomialDistribution(numSamples, numSuccesses / numSamples);
 }
 Abba.Proportion.prototype = {
-    // Compute an estimate of the underlying probability of success.
-    pEstimate: function(zCriticalValue) {
-        return this._adjustedWaldEstimate(zCriticalValue);
-    },
+    /* Compute an estimate of the underlying probability of success.
 
-    /* Generate an estimate for the underlying probability of success using the maximum likelihood
-       estimator and the normal approximation error.  This is the so-called Wald interval:
-
-       http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Normal_approximation_interval
-    */
-    _waldEstimate: function() {
-        return new Abba.ValueWithError(this._binomial.probability, this._binomial.standardError);
-    },
-
-    /* Compute the "adjusted Wald interval", which can be thought of as a Wald interval with
+       Uses the "adjusted Wald interval", which can be thought of as a Wald interval with
        (zCriticalValue^2 / 2) added to the number of successes and the number of failures. The
        estimated probability of success is the center of the interval. This provides much better
        coverage than the Wald interval (and many other intervals), though it has the unintuitive
@@ -155,8 +149,10 @@ Abba.Proportion.prototype = {
        and problem 1.24):
 
        Agresti, Alan. Categorical data analysis. New York, NY: John Wiley & Sons; 2002.
+
+       An ordinary Wald interval can be obtained by passing zCriticalValue = 0.
     */
-    _adjustedWaldEstimate: function(zCriticalValue) {
+    pEstimate: function(zCriticalValue) {
         var squaredZCriticalValue = zCriticalValue * zCriticalValue;
         var adjustedNumSamples = this.numSamples + squaredZCriticalValue;
         var adjustedBinomial = new Abba.BinomialDistribution(
@@ -192,26 +188,6 @@ Abba.ProportionComparison.prototype = {
         return new Abba.ValueWithError(ratio, error);
     },
 
-    /* Compute various values useful for comparing proportions with null hypothesis that they have
-       the same probability of success
-    */
-    _computeTestValues: function() {
-        var pooledProportion =
-            (this.baseline.numSuccesses + this.trial.numSuccesses)
-            / (this.baseline.numSamples + this.trial.numSamples);
-        var expectedDifference =
-            pooledProportion * (this.trial.numSamples - this.baseline.numSamples);
-        var observedDifference = this.trial.numSuccesses - this.baseline.numSuccesses;
-        return {
-            pooledProportion: pooledProportion,
-            expectedDifference: expectedDifference,
-            varianceOfDifference:
-                pooledProportion * (1 - pooledProportion)
-                * (this.baseline.numSamples + this.trial.numSamples),
-            observedAbsoluteDeviation: Math.abs(observedDifference - expectedDifference),
-        };
-    },
-
     /* For the given binomial distribution, compute an interval that covers at least
        (1 - coverageAlpha) of the total probability mass, centered at the expectation (unless we're
        at the boundary). Uses the normal approximation.
@@ -242,37 +218,38 @@ Abba.ProportionComparison.prototype = {
     /* Compute a p-value testing null hypothesis H0: pBaseline == pTrial against alternative
        hypothesis H1: pBaseline != pTrial by summing p-values conditioned on individual baseline
        success counts. This provides a more accurate correction for multiple testing but scales like
-       O(sqrt(this.baseline.numSamples)), so can eventually get slow. In that case we fall back to
-       zTest().
+       O(sqrt(this.baseline.numSamples)), so can eventually get slow for very large values.
 
        Lower coverageAlpha increases accuracy at the cost of longer runtime. Roughly, the result
        will be accurate within no more than coverageAlpha (but this ignores error due to the normal
        approximation so isn't guaranteed).
     */
     iteratedTest: function(numTrials, coverageAlpha) {
-        var values = this._computeTestValues();
+        var observedAbsoluteDelta = Math.abs(
+            this.trial.pEstimate(0).value - this.baseline.pEstimate(0).value);
+        var pooledProportion =
+            (this.baseline.numSuccesses + this.trial.numSuccesses)
+            / (this.baseline.numSamples + this.trial.numSamples);
         var trialDistribution = new Abba.BinomialDistribution(this.trial.numSamples,
-                                                              values.pooledProportion);
+                                                              pooledProportion);
         var baselineDistribution = new Abba.BinomialDistribution(this.baseline.numSamples,
-                                                                 values.pooledProportion);
-
-        // compute smallest and largest differences between success counts that are "at least as
-        // extreme" as the observed difference (the observed difference is equal to one of these)
-        var minExtremeDifference =
-            Math.floor(values.expectedDifference - values.observedAbsoluteDeviation);
-        var maxExtremeDifference =
-            Math.ceil(values.expectedDifference + values.observedAbsoluteDeviation);
+                                                                 pooledProportion);
 
         var baselineLimits = this._binomialCoverageInterval(baselineDistribution, coverageAlpha);
         var pValue = 0;
         for (var baselineSuccesses = baselineLimits[0];
              baselineSuccesses <= baselineLimits[1];
              baselineSuccesses++) {
+            var baselineProportion = baselineSuccesses / this.baseline.numSamples;
+            var lowerTrialCount = Math.floor(
+                (baselineProportion - observedAbsoluteDelta) * this.trial.numSamples);
+            var upperTrialCount = Math.ceil(
+                (baselineProportion + observedAbsoluteDelta) * this.trial.numSamples);
             // p-value of trial success counts "at least as extreme" for this particular baseline
             // success count
             var pValueAtBaseline =
-                trialDistribution.cdf(baselineSuccesses + minExtremeDifference)
-                + trialDistribution.survival(baselineSuccesses + maxExtremeDifference - 1);
+                trialDistribution.cdf(lowerTrialCount)
+                + trialDistribution.survival(upperTrialCount - 1);
 
             // this is exact because we're conditioning on the baseline count, so the multiple
             // trials are independent.

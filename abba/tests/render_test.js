@@ -131,10 +131,10 @@ describe('ResultsPresenter', function() {
 
 describe('Abba', function() {
     it('gets raw results', function() {
-        var test = new Abba.Abba('my baseline', 1, 2);
-        test.addTrial('my trial', 3, 4);
+        var test = new Abba.Abba('my baseline', 1000, 2000);
+        test.addTrial('my trial', 3000, 4000);
         var results = test.getResults();
-        expect(results['my baseline'].value).toBe(0.5);
-        expect(results['my trial'].proportion.value).toBe(0.75);
+        expect(results['my baseline'].value).toBeCloseTo(0.5);
+        expect(results['my trial'].proportion.value).toBeCloseTo(0.75);
     });
 });

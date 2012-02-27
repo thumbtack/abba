@@ -124,13 +124,13 @@ describe('Experiment', function() {
         expect(results.proportion.value).toBeCloseTo(0.33645761);
         expect(results.proportion.intervalWidth).toBeCloseTo(0.06469193);
         expect(results.relativeImprovement.value).toBeCloseTo(0.61481138);
-        expect(results.relativeImprovement.intervalWidth).toBeCloseTo(0);
-        expect(results.pValue).toBeCloseTo(0.0781727);
+        expect(results.relativeImprovement.intervalWidth).toBeCloseTo(0.63599408);
+        expect(results.pValue).toBeCloseTo(0.05763145);
     });
 
     it('computes experiment results for large problems', function() {
         experiment = new Abba.Experiment(3, 50000, 100000, 0.05);
         var results = experiment.getResults(101000, 200000);
-        expect(results.pValue).toBeCloseTo(0.0424500);
+        expect(results.pValue).toBeCloseTo(0.02445128);
     });
 });
