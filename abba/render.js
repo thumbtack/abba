@@ -262,7 +262,7 @@ Abba.ResultsPresenter.prototype = {
                                             results.overallConversionBounds);
         };
 
-        var baselineResultRow = this._view.addResultRow(allInputs.baseline.name);
+        var baselineResultRow = this._view.addResultRow(allInputs.baseline.label);
         renderConversionWithRange(baselineResultRow,
                                   allInputs.baseline,
                                   results.baselineProportion);
@@ -270,7 +270,7 @@ Abba.ResultsPresenter.prototype = {
 
         var self = this;
         results.trials.forEach(function(trial_results) {
-            var resultRow = self._view.addResultRow(trial_results.inputs.name);
+            var resultRow = self._view.addResultRow(trial_results.inputs.label);
             renderConversionWithRange(resultRow,
                                       trial_results.inputs,
                                       trial_results.outcome.proportion);
@@ -282,15 +282,15 @@ Abba.ResultsPresenter.prototype = {
 
 Abba.Abba = function(baselineName, baselineNumSuccesses, baselineNumSamples) {
     this._baseline = {
-        name: baselineName,
+        label: baselineName,
         numSuccesses: baselineNumSuccesses,
         numSamples: baselineNumSamples,
     };
     this._trials = [];
 }
 Abba.Abba.prototype = {
-    addTrial: function(name, numSuccesses, numSamples) {
-        this._trials.push({name: name, numSuccesses: numSuccesses, numSamples: numSamples});
+    addTrial: function(label, numSuccesses, numSamples) {
+        this._trials.push({label: label, numSuccesses: numSuccesses, numSamples: numSamples});
     },
 
     renderTo: function(container) {
@@ -305,9 +305,9 @@ Abba.Abba.prototype = {
                                              this._baseline.numSamples,
                                              Abba.BASELINE_ALPHA);
         results = {}
-        results[this._baseline.name] = experiment.getBaselineProportion();
+        results[this._baseline.label] = experiment.getBaselineProportion();
         this._trials.forEach(function(trial) {
-            results[trial.name] = experiment.getResults(trial.numSuccesses, trial.numSamples);
+            results[trial.label] = experiment.getResults(trial.numSuccesses, trial.numSamples);
         });
         return results;
     },
