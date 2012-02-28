@@ -262,7 +262,7 @@ Abba.ResultsPresenter.prototype = {
                                             results.overallConversionBounds);
         };
 
-        var baselineResultRow = this._view.addResultRow(allInputs.baseline.label);
+        var baselineResultRow = this._view.addResultRow(allInputs.baseline.name);
         renderConversionWithRange(baselineResultRow,
                                   allInputs.baseline,
                                   results.baselineProportion);
@@ -270,7 +270,7 @@ Abba.ResultsPresenter.prototype = {
 
         var self = this;
         results.trials.forEach(function(trial_results) {
-            var resultRow = self._view.addResultRow(trial_results.inputs.label);
+            var resultRow = self._view.addResultRow(trial_results.inputs.name);
             renderConversionWithRange(resultRow,
                                       trial_results.inputs,
                                       trial_results.outcome.proportion);
