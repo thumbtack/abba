@@ -168,6 +168,7 @@ input, button {
 input[type=text] {
     color: #5a5a5a;
     padding: 4px;
+    width: 160px;
     outline: none;
     background: #fff;
     border: 1px solid #aaa;
