@@ -12,33 +12,46 @@
         <script src="onload.js"></script>
     </head>
     <body>
-        <form id="inputs">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Label</th>
-                        <th>Number of successes</th>
-                        <th>Number of trials</th>
-                    </tr>
-                </thead>
-                <tbody class="inputs-table">
-                    <tr class="input-row baseline-input-row">
-                        <td><input type="text" class="label-input" value="Baseline" required /></td>
-                        <td><input type="text" class="num-successes-input" required /></td>
-                        <td><input type="text" class="num-samples-input" required /></td>
-                        <td>
-                          <a href="#" class="remove-input-link" style="display: none;">Remove</a>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-            <p>
-                <button type="submit" class="submit-button">Compute &raquo;</button>
-                <a href="#" class="add-input-link">Add another trial</a>
-            </p>
-        </form>
+        <div class="content">
+            <div class="header">
+                <h1>A<span class="b">B</span><span class="b2">B</span>A</h1>
+                <h2>A/B testing statistics</h2>
+            </div>
+            <div class="section">
+                <form id="inputs">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Label</th>
+                                <th>Number of successes</th>
+                                <th>Number of trials</th>
+                            </tr>
+                        </thead>
+                        <tbody class="inputs-table">
+                            <tr class="input-row baseline-input-row">
+                                <td><input type="text" class="label-input" value="Baseline" required /></td>
+                                <td><input type="text" class="num-successes-input" required /></td>
+                                <td><input type="text" class="num-samples-input" required /></td>
+                                <td>
+                                  <a href="#" class="remove-input-link" style="display: none;">Remove</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <p>
+                        <button type="submit" class="submit-button">Compute &raquo;</button>
+                        <a href="#" class="add-input-link">Add another trial</a>
+                    </p>
+                </form>
+            </div>
+            <div class="section">
+                <div id="results"></div>
+            </div>
+        </div>
 
-        <div id="results"></div>
+        <div class="footer">
+            <p>Brought to you by <a href="http://www.thumbtack.com/engineering">Thumbtack Engineering</a>.</p>
+        </div>
 
         <iframe id="hidden-iframe" style="display: none;"></iframe>
     </body>
