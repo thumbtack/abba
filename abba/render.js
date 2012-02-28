@@ -175,7 +175,7 @@ Abba.ResultRowView.prototype = {
             .strokeStyle('#444')
             .anchor(function() { return (this.index === 0) ? 'left' : 'right'; })
             .add(pv.Label)
-            .font('12px "Droid Sans Mono"')
+            .font('12px "Arial"')
             .textStyle('#444')
             .textBaseline('middle')
             .text(function() { return (this.index === 0) ? '-' : '+'; });
