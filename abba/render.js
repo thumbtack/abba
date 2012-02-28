@@ -35,6 +35,12 @@ Abba.RESULT_TABLE_HTML = ' \
     </tbody> \
 </table>';
 
+Abba.RESULT_COLORS = {
+    neutral: '#D8D8D8',
+    lose: '#DF1210',
+    win: '#48E000'
+};
+
 Abba.Formatter = function() {}
 Abba.Formatter.prototype = {
     describeNumber: function(number, decimalSpots) {
@@ -126,9 +132,9 @@ Abba.ResultRowView.prototype = {
             .linear(overallRange.lowerBound, overallRange.upperBound)
             .range(0, width);
         var colors = pv.colors(
-            '#D8D8D8',
-            '#DF1210', // : '#E5C91E',
-            '#48E000'  // : '#E5C91E'
+            Abba.RESULT_COLORS.neutral,
+            Abba.RESULT_COLORS.lose,
+            Abba.RESULT_COLORS.win
         );
 
         var panel = new pv.Panel()
