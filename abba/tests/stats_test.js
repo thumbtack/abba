@@ -133,4 +133,10 @@ describe('Experiment', function() {
         var results = experiment.getResults(101000, 200000);
         expect(results.pValue).toBeCloseTo(0.02445128);
     });
+
+    it('computes the correct p-value in the trivial case', function() {
+        experiment = new Abba.Experiment(1, 0, 1, 0.05);
+        var results = experiment.getResults(0, 10);
+        expect(results.pValue).toBe(1);
+    });
 });

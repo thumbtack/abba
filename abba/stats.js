@@ -227,6 +227,11 @@ Abba.ProportionComparison.prototype = {
     iteratedTest: function(numTrials, coverageAlpha) {
         var observedAbsoluteDelta = Math.abs(
             this.trial.pEstimate(0).value - this.baseline.pEstimate(0).value);
+        if (observedAbsoluteDelta == 0) {
+            // a trivial case that the code below does not handle well
+            return 1;
+        }
+
         var pooledProportion =
             (this.baseline.numSuccesses + this.trial.numSuccesses)
             / (this.baseline.numSamples + this.trial.numSamples);
