@@ -35,11 +35,14 @@ describe('Presenter', function() {
                     numSuccesses: 10,
                     numSamples: 20,
                 },
-                trials: [{
-                    label: 'Trial 1',
-                    numSuccesses: 60,
-                    numSamples: 100,
-                }],
+                trials: [
+                    {label: 'Trial 1',
+                     numSuccesses: 60,
+                     numSamples: 100},
+                    {label: 'Trial 1 <2> + 3', // test some special characters
+                     numSuccesses: 3,
+                     numSamples: 4},
+                ],
             };
         };
 
@@ -101,13 +104,14 @@ describe('Presenter', function() {
         expect(resultsContainer._hidden).toBeTruthy();
         expect(renderedContainer).toBe(resultsContainer);
 
-        expect(renderedData.trials.length).toBe(1);
+        expect(renderedData.trials.length).toBe(2);
         expect(renderedData.baseline.name).toBe('Baseline');
         expect(renderedData.baseline.numSuccesses).toBe(10);
         expect(renderedData.baseline.numSamples).toBe(20);
         expect(renderedData.trials[0].name).toBe('Trial 1');
         expect(renderedData.trials[0].numSuccesses).toBe(60);
         expect(renderedData.trials[0].numSamples).toBe(100);
+        expect(renderedData.trials[1].name).toBe('Trial 1 <2> + 3');
     });
 
     it('handles history', function() {

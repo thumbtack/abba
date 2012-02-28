@@ -141,7 +141,7 @@ Abba.Presenter.prototype = {
         var trials = [];
         hash.split('&').forEach(function(parameter_string) {
             var parts = parameter_string.split('=').map(function(piece) {
-                return decodeURIComponent(piece.replace('+', ' '));
+                return decodeURIComponent(piece.replace(/\+/g, ' '));
             });
             var valueParts = parts[1].split(',').map(function(value) { return parseInt(value); });
             trials.push({
