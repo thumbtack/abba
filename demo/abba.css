@@ -52,7 +52,7 @@ table {
  */
 
 body {
-    font-family: Arial, Verdana, sans-serif;
+    font-family: Helvetica, Arial, Verdana, sans-serif;
     background: #d5d5d5;
     color: #333;
     margin-top: 40px;
@@ -69,13 +69,16 @@ h1 span {
     display: inline-block;
 }
 
-h1.animate span.b {
-    color: #1381A7;
+h1.animate span {
     -webkit-transition: all 1s ease-in-out;
     -moz-transition: all 1s ease-in-out;
     -o-transition: all 1s ease-in-out;
     -ms-transition: all 1s ease-in-out;
     transition: all 1s ease-in-out;
+}
+
+h1.animate span.b {
+    color: #1381A7;
     -moz-transform: translateX(5px) scaleX(-1);
     -webkit-transform: translateX(5px) scaleX(-1);
     -o-transform: translateX(5px) scaleX(-1);
@@ -85,11 +88,6 @@ h1.animate span.b {
 
 h1.animate span.b2 {
     color: #B42647;
-    -webkit-transition: all 1s ease-in-out;
-    -moz-transition: all 1s ease-in-out;
-    -o-transition: all 1s ease-in-out;
-    -ms-transition: all 1s ease-in-out;
-    transition: all 1s ease-in-out;
 }
 
 h1.animate:hover span.b {
@@ -240,6 +238,10 @@ hr {
 
 #inputs a {
     font-size: .8em;
+}
+
+#inputs p {
+    margin-top: 1em;
 }
 
 #results thead th {
