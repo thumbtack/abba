@@ -14,21 +14,21 @@ describe('Formatter', function() {
 
 describe('ResultsPresenter', function() {
     var experimentParams;
-    var StubExperiment = function(numTrials,
+    var StubExperiment = function(numVariations,
                                   baselineNumSuccesses,
-                                  baselineNumSamples,
+                                  baselineNumTrials,
                                   baseAlpha) {
-        experimentParams.numTrials = numTrials;
+        experimentParams.numVariations = numVariations;
         experimentParams.baselineNumSuccesses = baselineNumSuccesses;
-        experimentParams.baselineNumSamples = baselineNumSamples;
-        experimentParams.trialData = [];
+        experimentParams.baselineNumTrials = baselineNumTrials;
+        experimentParams.variationData = [];
 
         this.getBaselineProportion = function() {
             return new Abba.ValueWithInterval(0.5, 0.2);
         };
 
-        this.getResults = function(numSuccesses, numSamples) {
-            experimentParams.trialData.push([numSuccesses, numSamples]);
+        this.getResults = function(numSuccesses, numTrials) {
+            experimentParams.variationData.push([numSuccesses, numTrials]);
             return {
                 proportion: new Abba.ValueWithInterval(0.6, 0.3),
                 relativeImprovement: new Abba.ValueWithInterval(1.2, 0.15),
@@ -43,9 +43,9 @@ describe('ResultsPresenter', function() {
 
         this.addResultRow = function(label) {
             var row = {
-                renderConversion: function(numSuccesses, numSamples, rate) {
+                renderConversion: function(numSuccesses, numTrials, rate) {
                     this.numSuccesses = numSuccesses;
-                    this.numSamples = numSamples;
+                    this.numTrials = numTrials;
                     this.rate = rate;
                 },
 
@@ -87,26 +87,26 @@ describe('ResultsPresenter', function() {
             baseline: {
                 label: 'Baseline',
                 numSuccesses: 10,
-                numSamples: 20,
+                numTrials: 20,
             },
-            trials: [{
-                label: 'Trial 1',
+            variations: [{
+                label: 'Variation 1',
                 numSuccesses: 60,
-                numSamples: 100,
+                numTrials: 100,
             }],
         });
 
-        expect(experimentParams.numTrials).toBe(1);
+        expect(experimentParams.numVariations).toBe(1);
         expect(experimentParams.baselineNumSuccesses).toBe(10);
-        expect(experimentParams.baselineNumSamples).toBe(20);
-        expect(experimentParams.trialData).toEqual([[60, 100]]);
+        expect(experimentParams.baselineNumTrials).toBe(20);
+        expect(experimentParams.variationData).toEqual([[60, 100]]);
 
         expect(view.resultRows.length).toBe(2);
 
         var baselineRow = view.resultRows[0];
         expect(baselineRow.label).toBe('Baseline');
         expect(baselineRow.row.numSuccesses).toBe(10);
-        expect(baselineRow.row.numSamples).toBe(20);
+        expect(baselineRow.row.numTrials).toBe(20);
         expect(baselineRow.row.rate.value).toBe(0.5);
         expect(baselineRow.row.rate.intervalWidth).toBe(0.2);
         expect(baselineRow.row.isBlankOutcome).toBeTruthy();
@@ -115,26 +115,26 @@ describe('ResultsPresenter', function() {
         expect(baselineRow.row.overallRange.lowerBound).toBeCloseTo(0.3);
         expect(baselineRow.row.overallRange.upperBound).toBeCloseTo(0.9);
 
-        var trialRow = view.resultRows[1];
-        expect(trialRow.label).toBe('Trial 1');
-        expect(trialRow.row.numSuccesses).toBe(60);
-        expect(trialRow.row.numSamples).toBe(100);
-        expect(trialRow.row.rate.value).toBe(0.6);
-        expect(trialRow.row.rate.intervalWidth).toBe(0.3);
-        expect(trialRow.row.pValue).toBe(0.123);
-        expect(trialRow.row.improvement.value).toBe(1.2);
-        expect(trialRow.row.improvement.intervalWidth).toBe(0.15);
-        expect(trialRow.row.baselineRange.lowerBound).toBeCloseTo(0.3);
-        expect(trialRow.row.baselineRange.upperBound).toBeCloseTo(0.7);
+        var variationRow = view.resultRows[1];
+        expect(variationRow.label).toBe('Variation 1');
+        expect(variationRow.row.numSuccesses).toBe(60);
+        expect(variationRow.row.numTrials).toBe(100);
+        expect(variationRow.row.rate.value).toBe(0.6);
+        expect(variationRow.row.rate.intervalWidth).toBe(0.3);
+        expect(variationRow.row.pValue).toBe(0.123);
+        expect(variationRow.row.improvement.value).toBe(1.2);
+        expect(variationRow.row.improvement.intervalWidth).toBe(0.15);
+        expect(variationRow.row.baselineRange.lowerBound).toBeCloseTo(0.3);
+        expect(variationRow.row.baselineRange.upperBound).toBeCloseTo(0.7);
     });
 });
 
 describe('Abba', function() {
     it('gets raw results', function() {
         var test = new Abba.Abba('my baseline', 1000, 2000);
-        test.addTrial('my trial', 3000, 4000);
+        test.addVariation('my variation', 3000, 4000);
         var results = test.getResults();
         expect(results['my baseline'].value).toBeCloseTo(0.5);
-        expect(results['my trial'].proportion.value).toBeCloseTo(0.75);
+        expect(results['my variation'].proportion.value).toBeCloseTo(0.75);
     });
 });

@@ -46,21 +46,21 @@ Abba.NormalDistribution.prototype = {
    class could be improved by making it compute exact binomial functions for small cases and fall
    back to the normal approximation for large cases.
 */
-Abba.BinomialDistribution = function(numSamples, probability) {
-    this.numSamples = numSamples;
+Abba.BinomialDistribution = function(numTrials, probability) {
+    this.numTrials = numTrials;
     this.probability = probability;
-    this.expectation = numSamples * probability;
+    this.expectation = numTrials * probability;
     this.standardDeviation = Math.sqrt(this.expectation * (1 - probability));
 
     // normal approximation to this binomial distribution
     this._normal = new Abba.NormalDistribution(this.expectation, this.standardDeviation);
     this._lowerTailProbability = this._normal.cdf(-0.5);
-    this._upperTailProbability = this._normal.survival(numSamples + 0.5);
+    this._upperTailProbability = this._normal.survival(numTrials + 0.5);
 };
 Abba.BinomialDistribution.prototype = {
     mass: function(count) {
-        if (this.numSamples < 100) {
-            return jStat.binomial.pdf(count, this.numSamples, this.probability);
+        if (this.numTrials < 100) {
+            return jStat.binomial.pdf(count, this.numTrials, this.probability);
         } else {
             return this._normal.density(count);
         }
@@ -73,10 +73,10 @@ Abba.BinomialDistribution.prototype = {
     cdf: function(count) {
         if (count < 0) {
             return 0;
-        } else if (count >= this.numSamples) {
+        } else if (count >= this.numTrials) {
             return 1;
-        } else if (this.numSamples < 100) {
-            return jStat.binomial.cdf(count, this.numSamples, this.probability);
+        } else if (this.numTrials < 100) {
+            return jStat.binomial.cdf(count, this.numTrials, this.probability);
         } else {
             return this._rescaleProbability(
                 this._normal.cdf(count + 0.5) - this._lowerTailProbability);
@@ -88,11 +88,11 @@ Abba.BinomialDistribution.prototype = {
     },
 
     inverseCdf: function(probability) {
-        return Math.max(0, Math.min(this.numSamples, this._normal.inverseCdf(probability)));
+        return Math.max(0, Math.min(this.numTrials, this._normal.inverseCdf(probability)));
     },
 
     inverseSurvival: function(probability) {
-        return Math.max(0, Math.min(this.numSamples, this._normal.inverseSurvival(probability)));
+        return Math.max(0, Math.min(this.numTrials, this._normal.inverseSurvival(probability)));
     },
 };
 
@@ -132,11 +132,11 @@ Abba.ValueWithError.prototype = {
     },
 };
 
-// Represents a binomial proportion with numSuccesses successful samples out of numSamples total.
-Abba.Proportion = function(numSuccesses, numSamples) {
+// Represents a binomial proportion with numSuccesses successful trials out of numTrials total.
+Abba.Proportion = function(numSuccesses, numTrials) {
     this.numSuccesses = numSuccesses;
-    this.numSamples = numSamples;
-    this._binomial = new Abba.BinomialDistribution(numSamples, numSuccesses / numSamples);
+    this.numTrials = numTrials;
+    this._binomial = new Abba.BinomialDistribution(numTrials, numSuccesses / numTrials);
 }
 Abba.Proportion.prototype = {
     /* Compute an estimate of the underlying probability of success.
@@ -145,7 +145,7 @@ Abba.Proportion.prototype = {
        (zCriticalValue^2 / 2) added to the number of successes and the number of failures. The
        estimated probability of success is the center of the interval. This provides much better
        coverage than the Wald interval (and many other intervals), though it has the unintuitive
-       property that the estimated probabilty is not numSuccesses / numSamples. See (section 1.4.2
+       property that the estimated probabilty is not numSuccesses / numTrials. See (section 1.4.2
        and problem 1.24):
 
        Agresti, Alan. Categorical data analysis. New York, NY: John Wiley & Sons; 2002.
@@ -154,29 +154,30 @@ Abba.Proportion.prototype = {
     */
     pEstimate: function(zCriticalValue) {
         var squaredZCriticalValue = zCriticalValue * zCriticalValue;
-        var adjustedNumSamples = this.numSamples + squaredZCriticalValue;
+        var adjustedNumTrials = this.numTrials + squaredZCriticalValue;
         var adjustedBinomial = new Abba.BinomialDistribution(
-            adjustedNumSamples,
-            (this.numSuccesses + squaredZCriticalValue / 2) / adjustedNumSamples);
+            adjustedNumTrials,
+            (this.numSuccesses + squaredZCriticalValue / 2) / adjustedNumTrials);
         return new Abba.ValueWithError(
             adjustedBinomial.probability,
-            adjustedBinomial.standardDeviation / adjustedBinomial.numSamples);
+            adjustedBinomial.standardDeviation / adjustedBinomial.numTrials);
     },
 };
 
-Abba.ProportionComparison = function(baseline, trial, zCriticalValue) {
+Abba.ProportionComparison = function(baseline, variation, zCriticalValue) {
     this.baseline = baseline;
-    this.trial = trial;
+    this.variation = variation;
     this._zCriticalValue = zCriticalValue;
     this._standardNormal = new Abba.NormalDistribution();
 }
 Abba.ProportionComparison.prototype = {
-    // Generate an estimate of the difference in success rates between the trial and the baseline.
+    // Generate an estimate of the difference in success rates between the variation and the
+    // baseline.
     differenceEstimate: function() {
         var baselineP = this.baseline.pEstimate(this._zCriticalValue);
-        var trialP = this.trial.pEstimate(this._zCriticalValue);
-        var difference = trialP.value - baselineP.value;
-        var standardError = Math.sqrt(Math.pow(baselineP.error, 2) + Math.pow(trialP.error, 2));
+        var variationP = this.variation.pEstimate(this._zCriticalValue);
+        var difference = variationP.value - baselineP.value;
+        var standardError = Math.sqrt(Math.pow(baselineP.error, 2) + Math.pow(variationP.error, 2));
         return new Abba.ValueWithError(difference, standardError);
     },
 
@@ -193,9 +194,9 @@ Abba.ProportionComparison.prototype = {
        at the boundary). Uses the normal approximation.
     */
     _binomialCoverageInterval: function(distribution, coverageAlpha) {
-        if (distribution.numSamples < 1000) {
+        if (distribution.numTrials < 1000) {
             // don't even bother trying to optimize for small-ish sample sizes
-            return [0, distribution.numSamples];
+            return [0, distribution.numTrials];
         } else {
             return [
                 Math.floor(distribution.inverseCdf(coverageAlpha / 2)),
@@ -205,39 +206,39 @@ Abba.ProportionComparison.prototype = {
     },
 
     /* Given the probability of an event, compute the probability that it happens at least once in
-       numTimes independent trials. This is used to adjust a p-value for multiple comparisons.
+       numTests independent tests. This is used to adjust a p-value for multiple comparisons.
        When used to adjust alpha instead, this is called a Sidak correction (the logic is the same,
        the formula is inverted):
 
        http://en.wikipedia.org/wiki/Bonferroni_correction#.C5.A0id.C3.A1k_correction
     */
-    _probabilityUnion: function(probability, numTimes) {
-        return 1 - Math.pow(1 - probability, numTimes);
+    _probabilityUnion: function(probability, numTests) {
+        return 1 - Math.pow(1 - probability, numTests);
     },
 
-    /* Compute a p-value testing null hypothesis H0: pBaseline == pTrial against alternative
-       hypothesis H1: pBaseline != pTrial by summing p-values conditioned on individual baseline
+    /* Compute a p-value testing null hypothesis H0: pBaseline == pVariation against alternative
+       hypothesis H1: pBaseline != pVariation by summing p-values conditioned on individual baseline
        success counts. This provides a more accurate correction for multiple testing but scales like
-       O(sqrt(this.baseline.numSamples)), so can eventually get slow for very large values.
+       O(sqrt(this.baseline.numTrials)), so can eventually get slow for very large values.
 
        Lower coverageAlpha increases accuracy at the cost of longer runtime. Roughly, the result
        will be accurate within no more than coverageAlpha (but this ignores error due to the normal
        approximation so isn't guaranteed).
     */
-    iteratedTest: function(numTrials, coverageAlpha) {
+    iteratedTest: function(numTests, coverageAlpha) {
         var observedAbsoluteDelta = Math.abs(
-            this.trial.pEstimate(0).value - this.baseline.pEstimate(0).value);
+            this.variation.pEstimate(0).value - this.baseline.pEstimate(0).value);
         if (observedAbsoluteDelta == 0) {
             // a trivial case that the code below does not handle well
             return 1;
         }
 
         var pooledProportion =
-            (this.baseline.numSuccesses + this.trial.numSuccesses)
-            / (this.baseline.numSamples + this.trial.numSamples);
-        var trialDistribution = new Abba.BinomialDistribution(this.trial.numSamples,
-                                                              pooledProportion);
-        var baselineDistribution = new Abba.BinomialDistribution(this.baseline.numSamples,
+            (this.baseline.numSuccesses + this.variation.numSuccesses)
+            / (this.baseline.numTrials + this.variation.numTrials);
+        var variationDistribution = new Abba.BinomialDistribution(this.variation.numTrials,
+                                                                  pooledProportion);
+        var baselineDistribution = new Abba.BinomialDistribution(this.baseline.numTrials,
                                                                  pooledProportion);
 
         var baselineLimits = this._binomialCoverageInterval(baselineDistribution, coverageAlpha);
@@ -245,20 +246,20 @@ Abba.ProportionComparison.prototype = {
         for (var baselineSuccesses = baselineLimits[0];
              baselineSuccesses <= baselineLimits[1];
              baselineSuccesses++) {
-            var baselineProportion = baselineSuccesses / this.baseline.numSamples;
+            var baselineProportion = baselineSuccesses / this.baseline.numTrials;
             var lowerTrialCount = Math.floor(
-                (baselineProportion - observedAbsoluteDelta) * this.trial.numSamples);
+                (baselineProportion - observedAbsoluteDelta) * this.variation.numTrials);
             var upperTrialCount = Math.ceil(
-                (baselineProportion + observedAbsoluteDelta) * this.trial.numSamples);
-            // p-value of trial success counts "at least as extreme" for this particular baseline
-            // success count
+                (baselineProportion + observedAbsoluteDelta) * this.variation.numTrials);
+            // p-value of variation success counts "at least as extreme" for this particular
+            // baseline success count
             var pValueAtBaseline =
-                trialDistribution.cdf(lowerTrialCount)
-                + trialDistribution.survival(upperTrialCount - 1);
+                variationDistribution.cdf(lowerTrialCount)
+                + variationDistribution.survival(upperTrialCount - 1);
 
             // this is exact because we're conditioning on the baseline count, so the multiple
-            // trials are independent.
-            var adjustedPValue = this._probabilityUnion(pValueAtBaseline, numTrials);
+            // tests are independent.
+            var adjustedPValue = this._probabilityUnion(pValueAtBaseline, numTests);
 
             var baselineProbability = baselineDistribution.mass(baselineSuccesses);
             pValue += baselineProbability * adjustedPValue;
@@ -270,12 +271,12 @@ Abba.ProportionComparison.prototype = {
     },
 };
 
-// numTrials: number of trials to be compared to the baseline (i.e., not including the baseline)
-Abba.Experiment = function(numTrials, baselineNumSuccesses, baselineNumSamples, baseAlpha) {
+// numVariations: number of variations to be compared to the baseline
+Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrials, baseAlpha) {
     normal = new Abba.NormalDistribution();
-    this._baseline = new Abba.Proportion(baselineNumSuccesses, baselineNumSamples);
+    this._baseline = new Abba.Proportion(baselineNumSuccesses, baselineNumTrials);
 
-    this._numComparisons = Math.max(1, numTrials);
+    this._numComparisons = Math.max(1, numVariations);
     // all z-values are two-tailed
     var baseZCriticalValue = normal.inverseSurvival(baseAlpha / 2);
     var alpha = baseAlpha / this._numComparisons // Bonferroni correction
@@ -292,8 +293,8 @@ Abba.Experiment.prototype = {
             this._trialIntervalZCriticalValue);
     },
 
-    getResults: function(numSuccesses, numSamples) {
-        var trial = new Abba.Proportion(numSuccesses, numSamples);
+    getResults: function(numSuccesses, numTrials) {
+        var trial = new Abba.Proportion(numSuccesses, numTrials);
         var comparison = new Abba.ProportionComparison(
             this._baseline, trial, this._trialIntervalZCriticalValue);
         return {

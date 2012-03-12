@@ -5,7 +5,7 @@ Abba.InputsView = function($form, historyIframe) {
     this._historyIframe = historyIframe;
 }
 Abba.InputsView.prototype = {
-    setAddTrialHandler: function(callback) {
+    setAddGroupHandler: function(callback) {
         this._$form.find('.add-input-link').click(function(event) {
             event.preventDefault()
             callback();
@@ -61,7 +61,7 @@ Abba.InputsView.prototype = {
         $row.find('.label-input').val(name);
     },
 
-    _trialInputRows: function() {
+    _variationInputRows: function() {
         return this._$form.find('.input-row').not('.baseline-input-row');
     },
 
@@ -69,7 +69,7 @@ Abba.InputsView.prototype = {
         var self = this;
         return {
             baseline: this._readInputRow(this._$form.find('.baseline-input-row')),
-            trials: this._trialInputRows()
+            variations: this._variationInputRows()
                 .map(function() {
                     return self._readInputRow($(this));
                 })
@@ -81,9 +81,9 @@ Abba.InputsView.prototype = {
         var self = this;
         self._writeInputRow(this._$form.find('.baseline-input-row'), inputs.baseline);
 
-        this._trialInputRows().remove();
-        inputs.trials.forEach(function(trial) {
-            self._writeInputRow(self._createInputRow(), trial);
+        this._variationInputRows().remove();
+        inputs.variations.forEach(function(variation) {
+            self._writeInputRow(self._createInputRow(), variation);
         });
     },
 };
@@ -100,22 +100,22 @@ Abba.Presenter.prototype = {
         this._$resultsContainer = $resultsContainer;
 
         var self = this;
-        inputsView.setAddTrialHandler(function() { self._addTrial(); });
+        inputsView.setAddGroupHandler(function() { self._addGroup(); });
         inputsView.setComputeHandler(function() { self._triggerComputation(); });
         inputsView.setHistoryHandler(function(hash) { self._handleHistoryChange(hash); });
     },
 
-    _chooseTrialName: function() {
+    _chooseGroupName: function() {
         var inputs = this._inputsView.getInputs();
         var usedNames = {};
         usedNames[inputs.baseline.label] = true;
-        inputs.trials.forEach(function(trial) {
-            usedNames[trial.label] = true;
+        inputs.variations.forEach(function(variation) {
+            usedNames[variation.label] = true;
         });
 
         var index = 1;
         while (true) {
-            var label = 'Trial ' + index;
+            var label = 'Variation ' + index;
             if (!(label in usedNames)) {
                 return label;
             }
@@ -123,8 +123,8 @@ Abba.Presenter.prototype = {
         }
     },
 
-    _addTrial: function() {
-        this._inputsView.addInputRow(this._chooseTrialName());
+    _addGroup: function() {
+        this._inputsView.addInputRow(this._chooseGroupName());
     },
 
     _serializeInputs: function(inputs) {
@@ -133,28 +133,28 @@ Abba.Presenter.prototype = {
             data[rowData.label] = rowData.numSuccesses + ',' + rowData.numSamples;
         }
         addRow(inputs.baseline);
-        inputs.trials.forEach(function(trial) { addRow(trial); });
+        inputs.variations.forEach(function(variation) { addRow(variation); });
         return $.param(data);
     },
 
     _deserializeInputs: function(hash) {
-        var trials = [];
+        var variations = [];
         hash.split('&').forEach(function(parameter_string) {
             var parts = parameter_string.split('=').map(function(piece) {
                 return decodeURIComponent(piece.replace(/\+/g, ' '));
             });
             var valueParts = parts[1].split(',').map(function(value) { return parseInt(value); });
-            trials.push({
+            variations.push({
                 label: parts[0],
                 numSuccesses: valueParts[0],
                 numSamples: valueParts[1]
             });
         });
 
-        var baseline = trials.shift();
+        var baseline = variations.shift();
         return {
             baseline: baseline,
-            trials: trials,
+            variations: variations,
         };
     },
 
@@ -166,8 +166,8 @@ Abba.Presenter.prototype = {
         var test = new this._abTestClass(inputs.baseline.label,
                                          inputs.baseline.numSuccesses,
                                          inputs.baseline.numSamples);
-        inputs.trials.forEach(function(trial) {
-            test.addTrial(trial.label, trial.numSuccesses, trial.numSamples);
+        inputs.variations.forEach(function(variation) {
+            test.addVariation(variation.label, variation.numSuccesses, variation.numSamples);
         });
         test.renderTo(this._$resultsContainer);
     },
@@ -181,7 +181,7 @@ Abba.Presenter.prototype = {
         } else {
             this._inputsView.setInputs({
                 baseline: {label: 'Baseline'},
-                trials: [{label: 'Trial 1'}],
+                variations: [{label: 'Variation 1'}],
             });
         }
     },

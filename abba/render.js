@@ -108,10 +108,10 @@ Abba.ResultRowView.prototype = {
             .find('.error > span').text(this._formatter.percent(valueWithInterval.intervalWidth));
     },
 
-    renderConversion: function(numSuccesses, numSamples, rate) {
+    renderConversion: function(numSuccesses, numTrials, rate) {
         this._$row
             .find('.yes').text(this._formatter.describeNumber(numSuccesses)).end()
-            .find('.total').text(this._formatter.describeNumber(numSamples));
+            .find('.total').text(this._formatter.describeNumber(numTrials));
         this._renderInterval(rate, this._$row.find('.conversion-numeric'));
     },
 
@@ -227,27 +227,27 @@ Abba.ResultsPresenter.prototype = {
     },
 
     _computeResults: function(allInputs) {
-        var experiment = new this._experimentClass(allInputs.trials.length,
+        var experiment = new this._experimentClass(allInputs.variations.length,
                                                    allInputs.baseline.numSuccesses,
-                                                   allInputs.baseline.numSamples,
+                                                   allInputs.baseline.numTrials,
                                                    Abba.BASELINE_ALPHA);
 
         var baselineProportion = experiment.getBaselineProportion();
         var overallConversionBounds = {lowerBound: baselineProportion.range().lowerBound,
                                        upperBound: baselineProportion.range().upperBound};
-        var trials = allInputs.trials.map(function(trial) {
-            var outcome = experiment.getResults(trial.numSuccesses, trial.numSamples);
+        var variations = allInputs.variations.map(function(variation) {
+            var outcome = experiment.getResults(variation.numSuccesses, variation.numTrials);
             overallConversionBounds.lowerBound = Math.min(overallConversionBounds.lowerBound,
                                                           outcome.proportion.range().lowerBound)
             overallConversionBounds.upperBound = Math.max(overallConversionBounds.upperBound,
                                                           outcome.proportion.range().upperBound)
-            return {inputs: trial, outcome: outcome};
+            return {inputs: variation, outcome: outcome};
         });
 
         return {
             baselineProportion: baselineProportion,
             overallConversionBounds: overallConversionBounds,
-            trials: trials
+            variations: variations
         };
     },
 
@@ -256,7 +256,7 @@ Abba.ResultsPresenter.prototype = {
         var results = this._computeResults(allInputs);
 
         var renderConversionWithRange = function(resultRow, inputs, proportion) {
-            resultRow.renderConversion(inputs.numSuccesses, inputs.numSamples, proportion)
+            resultRow.renderConversion(inputs.numSuccesses, inputs.numTrials, proportion)
             resultRow.renderConversionRange(proportion.range(),
                                             results.baselineProportion.range(),
                                             results.overallConversionBounds);
@@ -269,45 +269,47 @@ Abba.ResultsPresenter.prototype = {
         baselineResultRow.blankOutcome();
 
         var self = this;
-        results.trials.forEach(function(trial_results) {
-            var resultRow = self._view.addResultRow(trial_results.inputs.label);
+        results.variations.forEach(function(variation_results) {
+            var resultRow = self._view.addResultRow(variation_results.inputs.label);
             renderConversionWithRange(resultRow,
-                                      trial_results.inputs,
-                                      trial_results.outcome.proportion);
-            resultRow.renderOutcome(trial_results.outcome.pValue,
-                                    trial_results.outcome.relativeImprovement);
+                                      variation_results.inputs,
+                                      variation_results.outcome.proportion);
+            resultRow.renderOutcome(variation_results.outcome.pValue,
+                                    variation_results.outcome.relativeImprovement);
         });
     },
 };
 
-Abba.Abba = function(baselineName, baselineNumSuccesses, baselineNumSamples) {
+Abba.Abba = function(baselineName, baselineNumSuccesses, baselineNumTrials) {
     this._baseline = {
         label: baselineName,
         numSuccesses: baselineNumSuccesses,
-        numSamples: baselineNumSamples,
+        numTrials: baselineNumTrials,
     };
-    this._trials = [];
+    this._variations = [];
 }
 Abba.Abba.prototype = {
-    addTrial: function(label, numSuccesses, numSamples) {
-        this._trials.push({label: label, numSuccesses: numSuccesses, numSamples: numSamples});
+    addVariation: function(label, numSuccesses, numTrials) {
+        this._variations.push({label: label, numSuccesses: numSuccesses, numTrials: numTrials});
     },
 
     renderTo: function(container) {
         var presenter = new Abba.ResultsPresenter(Abba.Experiment);
         presenter.bind(new Abba.ResultsView($(container)));
-        presenter.computeAndDisplayResults({baseline: this._baseline, trials: this._trials});
+        presenter.computeAndDisplayResults(
+            {baseline: this._baseline, variations: this._variations});
     },
 
     getResults: function() {
-        var experiment = new Abba.Experiment(this._trials.length,
+        var experiment = new Abba.Experiment(this._variations.length,
                                              this._baseline.numSuccesses,
-                                             this._baseline.numSamples,
+                                             this._baseline.numTrials,
                                              Abba.BASELINE_ALPHA);
         results = {}
         results[this._baseline.label] = experiment.getBaselineProportion();
-        this._trials.forEach(function(trial) {
-            results[trial.label] = experiment.getResults(trial.numSuccesses, trial.numSamples);
+        this._variations.forEach(function(variation) {
+            results[variation.label] = experiment.getResults(variation.numSuccesses,
+                                                             variation.numTrials);
         });
         return results;
     },

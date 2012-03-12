@@ -1,14 +1,14 @@
 describe('Presenter', function() {
     var FakeView = function() {
-        this.addTrialCallback = undefined;
+        this.addGroupCallback = undefined;
         this.computeCallback = undefined;
         this.historyCallback = undefined;
         this.historyHash = undefined;
         this.addedInputs = [];
         this.inputsThatWereSet = undefined;
 
-        this.setAddTrialHandler = function(callback) {
-            this.addTrialCallback = callback;
+        this.setAddGroupHandler = function(callback) {
+            this.addGroupCallback = callback;
         };
 
         this.setComputeHandler = function(callback) {
@@ -35,11 +35,11 @@ describe('Presenter', function() {
                     numSuccesses: 10,
                     numSamples: 20,
                 },
-                trials: [
-                    {label: 'Trial 1',
+                variations: [
+                    {label: 'Variation 1',
                      numSuccesses: 60,
                      numSamples: 100},
-                    {label: 'Trial 1 <2> + 3', // test some special characters
+                    {label: 'Variation 1 <2> + 3', // test some special characters
                      numSuccesses: 3,
                      numSamples: 4},
                 ],
@@ -68,16 +68,16 @@ describe('Presenter', function() {
             numSuccesses: baselineNumSuccesses,
             numSamples: baselineNumSamples,
         };
-        this._trials = [];
+        this._variations = [];
         this._renderedContainer = undefined;
 
-        this.addTrial = function(name, numSuccesses, numSamples) {
-            this._trials.push({name: name, numSuccesses: numSuccesses, numSamples: numSamples});
+        this.addVariation = function(name, numSuccesses, numSamples) {
+            this._variations.push({name: name, numSuccesses: numSuccesses, numSamples: numSamples});
         };
 
         this.renderTo = function(container) {
             renderedContainer = container;
-            renderedData = {baseline: this._baseline, trials: this._trials};
+            renderedData = {baseline: this._baseline, variations: this._variations};
         };
     };
 
@@ -93,9 +93,9 @@ describe('Presenter', function() {
         presenter.bind(view, resultsContainer);
     });
 
-    it('adds trials', function() {
-        view.addTrialCallback();
-        expect(view.addedInputs).toEqual(['Trial 2']);
+    it('adds groups', function() {
+        view.addGroupCallback();
+        expect(view.addedInputs).toEqual(['Variation 2']);
     });
 
     it('computes results', function() {
@@ -104,14 +104,14 @@ describe('Presenter', function() {
         expect(resultsContainer._hidden).toBeTruthy();
         expect(renderedContainer).toBe(resultsContainer);
 
-        expect(renderedData.trials.length).toBe(2);
+        expect(renderedData.variations.length).toBe(2);
         expect(renderedData.baseline.name).toBe('Baseline');
         expect(renderedData.baseline.numSuccesses).toBe(10);
         expect(renderedData.baseline.numSamples).toBe(20);
-        expect(renderedData.trials[0].name).toBe('Trial 1');
-        expect(renderedData.trials[0].numSuccesses).toBe(60);
-        expect(renderedData.trials[0].numSamples).toBe(100);
-        expect(renderedData.trials[1].name).toBe('Trial 1 <2> + 3');
+        expect(renderedData.variations[0].name).toBe('Variation 1');
+        expect(renderedData.variations[0].numSuccesses).toBe(60);
+        expect(renderedData.variations[0].numSamples).toBe(100);
+        expect(renderedData.variations[1].name).toBe('Variation 1 <2> + 3');
     });
 
     it('handles history', function() {
