@@ -47,6 +47,14 @@ table {
     border-spacing: 0;
 }
 
+strong {
+    font-weight: bold;
+}
+
+em {
+    font-style: italic;
+}
+
 /*
  * Thumbtack.com ABBA
  */
