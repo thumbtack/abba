@@ -47,6 +47,7 @@ Abba.NormalDistribution.prototype = {
    back to the normal approximation for large cases.
 */
 Abba.BinomialDistribution = function(numTrials, probability) {
+    this.SMALL_SAMPLE_MAX_TRIALS = 100;
     this.numTrials = numTrials;
     this.probability = probability;
     this.expectation = numTrials * probability;
@@ -59,7 +60,7 @@ Abba.BinomialDistribution = function(numTrials, probability) {
 };
 Abba.BinomialDistribution.prototype = {
     mass: function(count) {
-        if (this.numTrials < 100) {
+        if (this.numTrials <= this.SMALL_SAMPLE_MAX_TRIALS) {
             return jStat.binomial.pdf(count, this.numTrials, this.probability);
         } else {
             return this._normal.density(count);
@@ -75,7 +76,7 @@ Abba.BinomialDistribution.prototype = {
             return 0;
         } else if (count >= this.numTrials) {
             return 1;
-        } else if (this.numTrials < 100) {
+        } else if (this.numTrials <= this.SMALL_SAMPLE_MAX_TRIALS) {
             return jStat.binomial.cdf(count, this.numTrials, this.probability);
         } else {
             return this._rescaleProbability(
@@ -141,12 +142,12 @@ Abba.Proportion = function(numSuccesses, numTrials) {
 Abba.Proportion.prototype = {
     /* Compute an estimate of the underlying probability of success.
 
-       Uses the "adjusted Wald interval", which can be thought of as a Wald interval with
-       (zCriticalValue^2 / 2) added to the number of successes and the number of failures. The
-       estimated probability of success is the center of the interval. This provides much better
-       coverage than the Wald interval (and many other intervals), though it has the unintuitive
-       property that the estimated probabilty is not numSuccesses / numTrials. See (section 1.4.2
-       and problem 1.24):
+       Uses the "Agresti-Coull" or "adjusted Wald" interval, which can be thought of as a Wald
+       interval with (zCriticalValue^2 / 2) added to the number of successes and the number of
+       failures. The estimated probability of success is the center of the interval. This provides
+       much better coverage than the Wald interval (and many other intervals), though it has the
+       unintuitive property that the estimated probabilty is not numSuccesses / numTrials. See
+       (section 1.4.2 and problem 1.24):
 
        Agresti, Alan. Categorical data analysis. New York, NY: John Wiley & Sons; 2002.
 
@@ -273,19 +274,21 @@ Abba.ProportionComparison.prototype = {
 
 // numVariations: number of variations to be compared to the baseline
 Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrials, baseAlpha) {
+    this.P_VALUE_PRECISION = 1e-5;
+
     normal = new Abba.NormalDistribution();
     this._baseline = new Abba.Proportion(baselineNumSuccesses, baselineNumTrials);
 
     this._numComparisons = Math.max(1, numVariations);
-    // all z-values are two-tailed
-    var baseZCriticalValue = normal.inverseSurvival(baseAlpha / 2);
     var alpha = baseAlpha / this._numComparisons // Bonferroni correction
+    // all z-values are two-tailed
     this._zCriticalValue = normal.inverseSurvival(alpha / 2);
     // z critical value for confidence interval on individual proportions. We compute intervals with
-    // confidence level < alpha for individual trial proportions, so that they correspond neatly to
-    // the confidence interval on the difference (which is computed at confidence level alpha). This
-    // happens because some of the relative error disappears when we subtract the two proportions.
-    this._trialIntervalZCriticalValue = this._zCriticalValue / Math.sqrt(2)
+    // a lower confidence level than (1 - alpha) for individual trial proportions, so that they
+    // correspond neatly to the confidence interval on the difference (which is computed at
+    // confidence level alpha). This happens because some of the relative error disappears when we
+    // subtract the two proportions.
+    this._trialIntervalZCriticalValue = this._zCriticalValue / Math.sqrt(2);
 }
 Abba.Experiment.prototype = {
     getBaselineProportion: function() {
@@ -302,7 +305,7 @@ Abba.Experiment.prototype = {
                 this._trialIntervalZCriticalValue),
             relativeImprovement: comparison.differenceRatio().valueWithInterval(
                 this._zCriticalValue),
-            pValue: comparison.iteratedTest(this._numComparisons, 1e-5),
+            pValue: comparison.iteratedTest(this._numComparisons, this.P_VALUE_PRECISION),
         };
     },
 };
