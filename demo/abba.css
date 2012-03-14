@@ -99,8 +99,9 @@ li {
     margin-left: 30px;
 }
 
-pre {
+code {
     font-family: Inconsolata, monospace;
+    color: #01435A;
 }
 
 h1 span {
