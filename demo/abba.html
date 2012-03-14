@@ -326,11 +326,11 @@
 
             but because all of the tests share a single baseline group, they're not independent. In
             fact, in the case of two groups, the test statistics are jointly normal with positive
-            covariance equal to the variance of the baseline success count, \( n_\text{successes}
-            (n_\text{trials} - n_\text{successes}) / n_\text{trials} \) (this probably generalizes
-            to any number of groups, but I don't have the chops to prove it). Unfortunately, I know
-            of no good way to compute approximations of the multivariate normal CDF, which is what
-            we'd need to do if we wanted to use this fact to compute p-values.</p>
+            covariance equal to the variance of the baseline success rate, \( p_\text{pooled} (1 -
+            p_\text{pooled}) / n_\text{baseline trials} \)(this probably generalizes to any number
+            of groups, but I don't have the chops to prove it). Unfortunately, I know of no good way
+            to compute approximations of the multivariate normal CDF, which is what we'd need to do
+            if we wanted to use this fact to compute p-values.</p>
 
             <p>To get around that problem, we condition on the baseline success count \( B \). In that
             situation (and treating total trial counts as nonrandom for all groups), the tests are
