@@ -70,7 +70,7 @@
               <li>Testing copy variations in a marketing email or a search ad to see if one of them
               increases clickthrough rate.</li>
               <li>Testing various pricing options for a product to determine how price affects
-              conversion rate.</li>
+              purchase rate.</li>
             </ul>
 
             <p>In all of these examples, the groups are the different variations, and the
@@ -105,6 +105,39 @@
             <p>Abba was inspired by Google's
             excellent <a href="http://www.google.com/websiteoptimizer">Website Optimizer</a>
             tool.</p>
+
+            <h3>How does the code work?</h3>
+
+            <p><code>abba/stats.js</code> implements all of the statistics (detailed below). It relies
+            on the <a href="http://www.jstat.org">jStat</a> library for approxiations to normal and
+            binomial distribution functions.</p>
+
+            <p><code>abba/render.js</code> displays the test results given trial and success counts for
+            each group. It can be reused in your own applications &mdash; the <code>Abba</code>
+            class provides a friendly interface, e.g.,</p>
+
+            <pre><code>
+    abba = new Abba('Existing version', 20, 100);
+    abba.addVariation('Red button', 25, 100);
+    abba.addVariation('Green button', 30, 100);
+    abba.renderTo($('#results'));
+            </code></pre>
+
+            <p><code>render.js</code> isolates the DOM manipulation code in view classes so that the
+            rest of the logic (in <code>ResultsPresenter</code>) can be easily tested. We use
+            <a href="http://mbostock.github.com/protovis/">Protovis</a> to render the visual
+            confidence intervals.</p>
+
+            <p>The rest of the demo app is implemented in <code>demo/app.js</code> as both a useful tool
+            and an example of how you might use Abba as a library yourself. It
+            uses <a href="http://github.com/blixt/js-hash">js-hash</a> for history handling.</p>
+
+            <p>All three modules are unit tested
+            using <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, and of course we rely on
+            the wonderful <a href="http://jquery.com">jQuery</a>.</p>
+
+            <p>You can find all of the source in
+            our <a href="https://github.com/thumbtack/abba">github repo</a>.</p>
 
             <h3>What's a p-value?</h3>
 
@@ -141,7 +174,7 @@
             difference is meaningful to your business. The relative improvement confidence interval
             tends to be much more useful for making practical decisions.</p>
 
-            <p>That said, the usual question about p-value is <em>how low does it have to be?</em>
+            <p>That said, the usual question about p-values is <em>how low does it have to be?</em>
             The answer, of course, is <em>it depends</em>. If you're a startup testing small copy
             changes on a page, maybe a p-value of 10% is fine &mdash; better to move quickly and be
             wrong 10% of the time. On the other hand, if you're testing a prototype of a page that
@@ -286,9 +319,10 @@
             \]
 
             but because all of the tests share a single baseline group, they're not independent. In
-            fact, in the case of two tests, the test statistics are jointly normal with positive
-            covariance equal to the variance of the baseline success rate (this probably generalizes
-            to any number of tests, but I don't have the chops to prove it). Unfortunately, I know
+            fact, in the case of two groups, the test statistics are jointly normal with positive
+            covariance equal to the variance of the baseline success count, \( n_\text{successes}
+            (n_\text{trials} - n_\text{successes}) / n_\text{trials} \) (this probably generalizes
+            to any number of groups, but I don't have the chops to prove it). Unfortunately, I know
             of no good way to compute approximations of the multivariate normal CDF, which is what
             we'd need to do if we wanted to use this fact to compute p-values.</p>
 
@@ -316,42 +350,10 @@
             <p>To compute the conditional p-values, we find the upper and lower success counts for
             the variation group that would produce just as large of a difference in success rate as
             that observed, given the (conditional) baseline count. We then compute the tail
-            probabilities using the (binomial) distribution of the variation group's count (again,
-            relying on the pooled proportion). For small sample sizes (up to 100 trials) we compute
-            the binomial CDF directly; for larger samples we use the normal approximation.</p>
-
-            <h3>How does the code work?</h3>
-
-            <p><code>stats.js</code> implements all of the above statistics. It relies on
-            the <a href="http://www.jstat.org">jStat</a> library for approxiations to normal and
-            binomial distribution functions.</p>
-
-            <p><code>render.js</code> displays the test results given trial and success counts for
-            each group. It can be reused in your own applications &mdash; the <code>Abba</code>
-            class provides a friendly interface, e.g.,</p>
-
-            <pre><code>
-    abba = new Abba('Existing version', 20, 100);
-    abba.addVariation('Red button', 25, 100);
-    abba.addVariation('Green button', 30, 100);
-    abba.renderTo($('#results'));
-            </code></pre>
-
-            <p><code>render.js</code> isolates the DOM manipulation code in view classes so that the
-            rest of the logic (in <code>ResultsPresenter</code>) can be easily tested. We use
-            <a href="http://mbostock.github.com/protovis/">Protovis</a> to render the visual
-            confidence intervals.</p>
-
-            <p>The rest of the demo app is implemented in <code>app.js</code> as both a useful tool
-            and an example of how you might use Abba as a library yourself. It
-            uses <a href="http://github.com/blixt/js-hash">js-hash</a> for history handling.</p>
-
-            <p>All three modules are unit tested
-            using <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, and of course we rely on
-            the wonderful <a href="http://jquery.com">jQuery</a>.</p>
-
-            <p>You can find all of the source in
-            our <a href="https://github.com/thumbtack/abba">github repo</a>.</p>
+            probabilities using the (binomial) distribution of the variation group's success count
+            (again, relying on the pooled proportion). For small sample sizes (up to 100 trials) we
+            compute the binomial CDF directly; for larger samples we use the normal
+            approximation.</p>
         </section>
 
         <footer>
