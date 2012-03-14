@@ -63,7 +63,7 @@ body {
     font-family: Helvetica, Arial, Verdana, sans-serif;
     background: #d5d5d5;
     color: #333;
-    margin-top: 40px;
+    margin-top: 20px;
 }
 
 h1 {
@@ -143,15 +143,18 @@ h1 span {
           box-shadow: 0 8px 6px -6px black;
 }
 
-section {
+body > header, body > section {
     width: 800px;
     margin-left: 40px;
+}
+
+body > section {
+    margin-top: 20px;
     background: #efefef;
     border-top: 1px solid #fff;
     border-left: 1px solid #fff;
     border-bottom: 1px solid #bbb;
     border-right: 1px solid #bbb;
-    margin-top: 20px;
 }
 
 footer {
@@ -162,7 +165,7 @@ footer {
     margin: 20px 40px 20px 40px;
 }
 
-header {
+section > header {
     padding: 10px;
     border-bottom: 1px solid #bbb;
 }
