@@ -61,21 +61,20 @@ em {
 
 body {
     font-family: Helvetica, Arial, Verdana, sans-serif;
-    background: #d5d5d5;
+    background: #efefef;
     color: #333;
-    margin-top: 20px;
 }
 
 h1 {
     font-size: 3em;
     font-weight: bold;
-    letter-spacing: -5px;
+    letter-spacing: -0.1em;
     text-shadow: 0 1px 2px #aaa;
 }
 
 h2, h3 {
     font-size: 1.5em;
-    text-shadow: 0 1px 2px #aaa;
+    text-shadow: 0 0.06em 0.1em #aaa;
 }
 
 h3 {
@@ -96,19 +95,29 @@ li {
     line-height: 1.3em;
     list-style-type: disc;
     margin-bottom: 1em;
-    margin-left: 30px;
+    margin-left: 2em;
 }
 
-code {
-    font-family: Inconsolata, monospace;
+pre {
+    margin-bottom: 1em;
+}
+
+pre, code {
+    background-color: #eee;
+    font-family: monospace;
     color: #01435A;
 }
 
-h1 span {
-    display: inline-block;
+strong {
+    font-weight: bold;
+}
+
+em {
+    font-style: italic;
 }
 
 .animate span {
+    display: inline-block;
     -webkit-transition: all 1s ease-in-out;
        -moz-transition: all 1s ease-in-out;
          -o-transition: all 1s ease-in-out;
@@ -138,47 +147,54 @@ h1 span {
 }
 
 .shadow {
-  -webkit-box-shadow: 0 8px 6px -6px black;
-     -moz-box-shadow: 0 8px 6px -6px black;
-          box-shadow: 0 8px 6px -6px black;
-}
-
-body > header, body > section {
-    width: 800px;
-    margin-left: 40px;
-}
-
-body > section {
-    margin-top: 20px;
-    background: #efefef;
-    border-top: 1px solid #fff;
-    border-left: 1px solid #fff;
-    border-bottom: 1px solid #bbb;
-    border-right: 1px solid #bbb;
+    border-top: 1px solid #bbb;
+    -webkit-box-shadow: inset 0 6px 6px -6px #333;
+       -moz-box-shadow: inset 0 6px 6px -6px #333;
+            box-shadow: inset 0 6px 6px -6px #333;
 }
 
 footer {
-    font-size: .8em;
-    text-shadow: 0 1px 1px #fff;
-    padding: 20px;
-    width: 760px;
-    margin: 20px 40px 20px 40px;
+    padding: 2em;
+    font-size: .9em;
 }
 
-section > header {
-    padding: 10px;
+body > header {
+    padding: .5em .5em .5em 2em;
     border-bottom: 1px solid #bbb;
 }
 
+section > header {
+    padding: 1em 1em 1em 2em;
+    border-bottom: 1px solid #bbb;
+}
+
+.toolkit {
+    background: #efefef;
+}
+
 .faq {
-    padding: 20px;
-    width: 760px;
+    padding-top: 2em;
+    padding-left: 2em;
+    padding-bottom: 2em;
+    background-color: #fff;
+}
+
+.faq * {
+    max-width: 540px;
 }
 
 .sub-section {
     border-top: 1px solid #fff;
     border-bottom: 1px solid #bbb;
-    padding: 10px;
+}
+
+.section-one {
+    border-top: 0px;
+    background: #e7e7e7;
+}
+
+.section-two {
+    background: #e7e7e7;
 }
 
 table {
@@ -205,6 +221,10 @@ thead th {
     padding-left: 5px;
 }
 
+th {
+    font-weight: bold;
+}
+
 input, button {
     font-size: 1em;
 }
@@ -212,27 +232,27 @@ input, button {
 input[type=text] {
     color: #5a5a5a;
     padding: 4px;
-    width: 160px;
+    width: 90%;
     outline: none;
     background: #fff;
     border: 1px solid #aaa;
     border-radius: 4px;
     -webkit-border-radius: 4px;
-    -moz-border-radius: 4px;
+       -moz-border-radius: 4px;
     -webkit-box-shadow: inset 1px 1px 0 0 #ccc;
-    -moz-box-shadow: inset 1px 1px 0 0 #ccc;
-    -o-box-shadow: inset 1px 1px 0 0 #ccc;
-    -ms-box-shadow: inset 1px 1px 0 0 #ccc;
-    box-shadow: inset 1px 1px 0 0 #ccc;
+       -moz-box-shadow: inset 1px 1px 0 0 #ccc;
+         -o-box-shadow: inset 1px 1px 0 0 #ccc;
+        -ms-box-shadow: inset 1px 1px 0 0 #ccc;
+            box-shadow: inset 1px 1px 0 0 #ccc;
 }
 
 input[type=text]:focus {
     background: #FFFFFF;
     -webkit-box-shadow: 0 0 1px 1px #F3E510;
-    -moz-box-shadow: 0 0 1px 1px #F3E510;
-    -o-box-shadow: 0 0 1px 1px #F3E510;
-    -ms-box-shadow: 0 0 1px 1px #F3E510;
-    box-shadow: 0 0 1px 1px #F3E510;
+       -moz-box-shadow: 0 0 1px 1px #F3E510;
+         -o-box-shadow: 0 0 1px 1px #F3E510;
+        -ms-box-shadow: 0 0 1px 1px #F3E510;
+            box-shadow: 0 0 1px 1px #F3E510;
 }
 
 button {
@@ -252,9 +272,9 @@ button {
     padding: 5px 10px;
     font-weight: bold;
     margin-right: 10px;
-    border-radius: 5px;
-    -moz-border-radius: 5px;
     -webkit-border-radius: 5px;
+       -moz-border-radius: 5px;
+            border-radius: 5px;
 }
 
 button:hover {
@@ -272,25 +292,20 @@ button:hover {
     cursor: pointer;
 }
 
-hr {
-    margin: 17px 0 18px;
-    height: 0;
-    clear: both;
-    border: solid #ddd;
-    border-width: 1px 0 0;
-    border-top: #ddd;
-    border-bottom: #aaa;
+.inputs, .results {
+    padding: 2em;
+    max-width: 800px;
 }
 
-#inputs a {
+.inputs a {
     font-size: .8em;
 }
 
-#inputs p {
+.inputs p {
     margin-top: 1em;
 }
 
-#results thead th {
+.results thead th {
     padding-left: 0;
 }
 
