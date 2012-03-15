@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
     <head>
-        <title>Abba &ndash; interpret the result of binomial experiments and A/B tests</title>
+        <title>Abba &ndash; interpret the results of binomial experiments and A/B tests</title>
         <link rel="stylesheet" type="text/css" href="abba.css" />
         <script src="../lib/jquery.min.js"></script>
         <script src="../lib/protovis-r3.2.js"></script>
@@ -63,13 +63,13 @@
             <h3>What is Abba?</h3>
 
             <p>Abba helps you interpret the results of binomial experiments. In this kind of
-            experiment, you run a number of trials, each of which end in either a "successful"
+            experiment, you run a number of trials, each of which ends in either a "successful"
             outcome or a "failure" outcome. Trials are divided into two or more groups, and the goal
             of the experiment is to draw conclusions about how the chance of success differs between
             those groups. This usually boils down to determining if the success rate is higher for
             one group than for another.</p>
 
-            <p>In the world of consumer web, some common examples would be:</p>
+            <p>In the world of consumer web, some common examples of binomial experiments would be:</p>
 
             <ul>
               <li>Testing variations of a signup form against the exsting form to see if either one
@@ -85,8 +85,44 @@
             up, clicking through, or purchasing.</p>
 
             <p>Abba handles binomial experiments with any number of groups. One group is always
-            designated as the baseline and all other groups are compared against it. Abba computes a
-            few useful results:</p>
+            designated as the baseline and all other groups are compared against it.</p>
+
+            <p>Abba was motivated by the experiments we run daily to make data-informed product
+            decisions here at <a href="http://www.thumbtack.com">Thumbtack</a> (shameless
+            plug: <a href="http://www.thumbtack.com/jobs">we're hiring</a>!). Abba's interface was
+            inspired by Google's excellent <a href="http://www.google.com/websiteoptimizer">Website
+            Optimizer</a> tool.</p>
+
+            <h3>Why is Abba useful?</h3>
+
+            <p>The main reason to use Abba is to avoid drawing conclusions based on observed
+            anomalies that were actually due to chance. If we were to simply compare the observed
+            success rates of each group, we'd have no way to know whether a group is truly better
+            (and can be expected to perform better in the future) or whether the results were just a
+            fluke. All real-world experiments are subject to some degree of unavoidable random
+            variation &mdash; Abba helps quantify how confident we can be that our conclusions
+            reflect genuine differences between groups.</p>
+
+            <p>Also keep in mind that random variation is only one source of error in
+            experiments. External factors such as time or geography can also lead to misleading
+            results. For example, suppose you run a baseline signup form on a Monday and a new
+            variation the next day, and the variation gets substantially more signups. Is the new
+            form truly better, in that we can expect it to perform better over the long run? Or are
+            people just more inclined to sign up on Tuesdays? Or did people just sign up more on that
+            particular Tuesday because the weather was nice?</p>
+
+            <p>The best way to avoid external sources of error is to run all groups over exactly the
+            same time period and on exactly the same target population, and to randomize trials into
+            the different groups. This means, for instance, that you should not compare results for
+            new variations to prior results for the baseline &mdash; you should only compare groups
+            that were run together in the same experiment.</p>
+
+            <p>And remember: if you reach conclusions that seem too good/bad to be true, they
+            probably are! Always consider external sources of error before drawing conclusions.</p>
+
+            <h3>What do the results mean?</h3>
+
+            <p>Abba computes a few useful results:</p>
 
             <ul>
               <li>The estimated <strong>success rate</strong> along with a confidence interval,
@@ -109,14 +145,10 @@
             so you can easily share reports by copying the URL and sending it to your friends,
             coworkers, Twitter followers, blog readers, or maybe just Mom.</p>
 
-            <p>Abba was inspired by Google's
-            excellent <a href="http://www.google.com/websiteoptimizer">Website Optimizer</a>
-            tool.</p>
-
             <h3>How does the code work?</h3>
 
             <p><code>abba/stats.js</code> implements all of the statistics (detailed below). It relies
-            on the <a href="http://www.jstat.org">jStat</a> library for approxiations to normal and
+            on the <a href="http://www.jstat.org">jStat</a> library for approximations to normal and
             binomial distribution functions.</p>
 
             <p><code>abba/render.js</code> displays the test results given trial and success counts for
@@ -177,7 +209,7 @@
             difference between the two forms. The p-value is only distinguishing between
             &quot;they're the same&quot; and &quot;they're different&quot;, but &quot;they're
             different&quot; may mean &quot;they're different by 0.001%&quot;. If you have a billion
-            users try each form, you'll probably get a tiny p-value, but that doesn't mean there the
+            users try each form, you'll probably get a tiny p-value, but that doesn't mean that the
             difference is meaningful to your business. The relative improvement confidence interval
             tends to be much more useful for making practical decisions.</p>
 
@@ -253,13 +285,13 @@
 
             <h3>Why do all of the results change when I add a trial?</h3>
 
-            <p>The primary reason to use Abba is to avoid drawing conclusions based on observed
-            anomalies that were actually due to chance. In an experiment where we test many groups
-            against a single baseline, we're effectively running many experiments at once. If we
-            rely on the usual p-values and confidence intervals, we're fooling ourselves into a
-            false sense of security. The usual values limit the risk of a false positive result for
-            each individual group, but the risk of at least one false positive from any group is
-            larger. The more groups we test against the baseline, the larger this risk grows.</p>
+            <p>As explained above, Abba guards against results that are due purely to chance. In an
+            experiment where we test many groups against a single baseline, we're effectively
+            running many experiments at once. If we rely on the usual p-values and confidence
+            intervals, we're fooling ourselves into a false sense of security. The usual values
+            limit the risk of a false positive result for each individual group, but the risk of at
+            least one false positive from any group is larger. The more groups we test against the
+            baseline, the larger this risk grows.</p>
 
             <p>To avoid this problem, the p-values and confidence intervals are automatically
             adjusted based on the number of groups being compared to the baseline. The adjustment is
@@ -295,7 +327,8 @@
             \alpha_\text{improvement} = \frac{\alpha_\text{base}}{N}
             \]
 
-            for \( N \) tests. The confidence interval is made smaller for individual success rates by adjusting the Z critical value:
+            for \( N \) tests. The confidence interval is made smaller for individual success rates
+            by adjusting the Z critical value:
 
             \[
             z_\text{success rate} = \frac{z_\text{improvement}}{\sqrt{2}}
