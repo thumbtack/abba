@@ -108,6 +108,10 @@ Abba.ResultRowView.prototype = {
             .find('.error > span').text(this._formatter.percent(valueWithInterval.intervalWidth));
     },
 
+    _supportsSvg: function(document) {
+        return document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Shape", "1.0")
+    },
+
     renderConversion: function(numSuccesses, numTrials, rate) {
         this._$row
             .find('.yes').text(this._formatter.describeNumber(numSuccesses)).end()
@@ -125,6 +129,10 @@ Abba.ResultRowView.prototype = {
     },
 
     renderConversionRange: function(range, baselineRange, overallRange) {
+        if (!this._supportsSvg(document)) {
+            return;
+        }
+
         var canvas = this._$row.find('.conversion-visual');
         var width = 200;
         var height = 25;
