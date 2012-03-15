@@ -36,7 +36,7 @@ Abba.NormalDistribution.prototype = {
     // probability must be in (0, 1).
     inverseSurvival: function(probability) {
         return this.mean - (this.inverseCdf(probability) - this.mean);
-    },
+    }
 };
 
 /* Distribution functions for the binomial distribution. Relies entirely on the normal
@@ -94,7 +94,7 @@ Abba.BinomialDistribution.prototype = {
 
     inverseSurvival: function(probability) {
         return Math.max(0, Math.min(this.numTrials, this._normal.inverseSurvival(probability)));
-    },
+    }
 };
 
 Abba.ValueWithInterval = function(value, intervalWidth) {
@@ -107,7 +107,7 @@ Abba.ValueWithInterval.prototype = {
             lowerBound: this.value - this.intervalWidth,
             upperBound: this.value + this.intervalWidth
         };
-    },
+    }
 };
 
 // A value with standard error, from which a confidence interval can be derived.
@@ -130,7 +130,7 @@ Abba.ValueWithError.prototype = {
 
     valueWithInterval: function(criticalZValue) {
         return new Abba.ValueWithInterval(this.value, this.confidenceIntervalWidth(criticalZValue));
-    },
+    }
 };
 
 // Represents a binomial proportion with numSuccesses successful trials out of numTrials total.
@@ -162,7 +162,7 @@ Abba.Proportion.prototype = {
         return new Abba.ValueWithError(
             adjustedBinomial.probability,
             adjustedBinomial.standardDeviation / adjustedBinomial.numTrials);
-    },
+    }
 };
 
 Abba.ProportionComparison = function(baseline, variation, zCriticalValue) {
@@ -201,7 +201,7 @@ Abba.ProportionComparison.prototype = {
         } else {
             return [
                 Math.floor(distribution.inverseCdf(coverageAlpha / 2)),
-                Math.ceil(distribution.inverseSurvival(coverageAlpha / 2)),
+                Math.ceil(distribution.inverseSurvival(coverageAlpha / 2))
             ];
         }
     },
@@ -269,7 +269,7 @@ Abba.ProportionComparison.prototype = {
         // the remaining baseline values we didn't cover contribute less than coverageAlpha to the
         // sum, so adding that amount gives us a conservative upper bound.
         return pValue + coverageAlpha;
-    },
+    }
 };
 
 // numVariations: number of variations to be compared to the baseline
@@ -305,9 +305,9 @@ Abba.Experiment.prototype = {
                 this._trialIntervalZCriticalValue),
             relativeImprovement: comparison.differenceRatio().valueWithInterval(
                 this._zCriticalValue),
-            pValue: comparison.iteratedTest(this._numComparisons, this.P_VALUE_PRECISION),
+            pValue: comparison.iteratedTest(this._numComparisons, this.P_VALUE_PRECISION)
         };
-    },
+    }
 };
 
 return Abba;

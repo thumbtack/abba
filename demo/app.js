@@ -73,7 +73,7 @@ Abba.InputsView.prototype = {
                 .map(function() {
                     return self._readInputRow($(this));
                 })
-                .get(),
+                .get()
         };
     },
 
@@ -85,7 +85,7 @@ Abba.InputsView.prototype = {
         inputs.variations.forEach(function(variation) {
             self._writeInputRow(self._createInputRow(), variation);
         });
-    },
+    }
 };
 
 Abba.Presenter = function(abTestClass) {
@@ -181,10 +181,10 @@ Abba.Presenter.prototype = {
         } else {
             this._inputsView.setInputs({
                 baseline: {label: 'Baseline'},
-                variations: [{label: 'Variation 1'}],
+                variations: [{label: 'Variation 1'}]
             });
         }
-    },
+    }
 };
 
 return Abba;

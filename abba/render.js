@@ -94,7 +94,7 @@ Abba.Formatter.prototype = {
         } else {
             return (100 * pValue).toFixed(this._getDefaultPlaces(pValue)) + '%';
         }
-    },
+    }
 }
 
 Abba.ResultRowView = function($row, formatter) {
@@ -188,7 +188,7 @@ Abba.ResultRowView.prototype = {
             .strokeStyle('#444');
 
         panel.render();
-    },
+    }
 };
 
 // Handles all DOM manipulation and event binding
@@ -213,7 +213,7 @@ Abba.ResultsView.prototype = {
     clearResults: function() {
         this._$container.find('.result-row').remove();
         this._$container.hide();
-    },
+    }
 };
 
 
@@ -277,14 +277,14 @@ Abba.ResultsPresenter.prototype = {
             resultRow.renderOutcome(variation_results.outcome.pValue,
                                     variation_results.outcome.relativeImprovement);
         });
-    },
+    }
 };
 
 Abba.Abba = function(baselineName, baselineNumSuccesses, baselineNumTrials) {
     this._baseline = {
         label: baselineName,
         numSuccesses: baselineNumSuccesses,
-        numTrials: baselineNumTrials,
+        numTrials: baselineNumTrials
     };
     this._variations = [];
 }
@@ -312,7 +312,7 @@ Abba.Abba.prototype = {
                                                              variation.numTrials);
         });
         return results;
-    },
+    }
 };
 
 return Abba;
