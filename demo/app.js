@@ -46,7 +46,7 @@ Abba.InputsView.prototype = {
         return {
             label: $row.find('.label-input').val(),
             numSuccesses: parseInt($row.find('.num-successes-input').val()),
-            numSamples: parseInt($row.find('.num-samples-input').val()),
+            numSamples: parseInt($row.find('.num-samples-input').val())
         };
     },
 
@@ -154,7 +154,7 @@ Abba.Presenter.prototype = {
         var baseline = variations.shift();
         return {
             baseline: baseline,
-            variations: variations,
+            variations: variations
         };
     },
 
