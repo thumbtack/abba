@@ -109,7 +109,9 @@ Abba.ResultRowView.prototype = {
     },
 
     _supportsSvg: function(document) {
-        return document.implementation.hasFeature("http://www.w3.org/TR/SVG11/feature#Shape", "1.0")
+        var div = document.createElement('div');
+        div.innerHTML = '<svg/>';
+        return (div.firstChild && div.firstChild.namespaceURI) == 'http://www.w3.org/2000/svg';
     },
 
     renderConversion: function(numSuccesses, numTrials, rate) {
