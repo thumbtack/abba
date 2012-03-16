@@ -11,7 +11,4 @@ $(function() {
         new Abba.InputsView($('.inputs'), document.getElementById('hidden-iframe')),
         $('.results')
     );
-
-    // trigger animations
-    $("h1").addClass("animate");
 });
