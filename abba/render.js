@@ -90,9 +90,9 @@ Abba.Formatter.prototype = {
 
     formatPValue: function(pValue) {
         if (pValue < 0.0001) {
-            return '< 0.01%';
+            return '< 0.0001';
         } else {
-            return (100 * pValue).toFixed(this._getDefaultPlaces(pValue)) + '%';
+            return pValue.toFixed(this._getDefaultPlaces(pValue) + 2);
         }
     }
 }
