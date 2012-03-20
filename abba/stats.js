@@ -281,18 +281,12 @@ Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrial
     var alpha = baseAlpha / this._numComparisons // Bonferroni correction
     // all z-values are two-tailed
     this._zCriticalValue = normal.inverseSurvival(alpha / 2);
-    // z critical value for confidence interval on individual proportions. We compute intervals with
-    // a lower confidence level than (1 - alpha) for individual trial proportions, so that they
-    // correspond neatly to the confidence interval on the difference (which is computed at
-    // confidence level alpha). This happens because some of the relative error disappears when we
-    // subtract the two proportions.
-    this._trialIntervalZCriticalValue = this._zCriticalValue / Math.sqrt(2);
 }
 Abba.Experiment.prototype = {
     getBaselineProportion: function() {
         return this._baseline
-            .pEstimate(this._trialIntervalZCriticalValue)
-            .valueWithInterval(this._trialIntervalZCriticalValue, this._baseline.pEstimate(0).value);
+            .pEstimate(this._zCriticalValue)
+            .valueWithInterval(this._zCriticalValue, this._baseline.pEstimate(0).value);
     },
 
     getResults: function(numSuccesses, numTrials) {
@@ -300,10 +294,10 @@ Abba.Experiment.prototype = {
         var comparison = new Abba.ProportionComparison(this._baseline, trial);
         return {
             proportion: trial
-                .pEstimate(this._trialIntervalZCriticalValue)
-                .valueWithInterval(this._trialIntervalZCriticalValue, trial.pEstimate(0).value),
+                .pEstimate(this._zCriticalValue)
+                .valueWithInterval(this._zCriticalValue, trial.pEstimate(0).value),
             relativeImprovement: comparison
-                .differenceRatio(this._trialIntervalZCriticalValue)
+                .differenceRatio(this._zCriticalValue)
                 .valueWithInterval(this._zCriticalValue, comparison.differenceRatio(0).value),
             pValue: comparison.iteratedTest(this._numComparisons, this.P_VALUE_PRECISION)
         };
