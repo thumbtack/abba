@@ -1,7 +1,7 @@
 $(function() {
     // override default result colors for charts
     Abba.RESULT_COLORS = {
-        neutral: '#D8D8D8',
+        neutral: '#B8B8B8',
         lose: '#B42647',
         win: '#26B43C'
     };

@@ -97,18 +97,11 @@ Abba.BinomialDistribution.prototype = {
     }
 };
 
-Abba.ValueWithInterval = function(value, intervalWidth) {
+Abba.ValueWithInterval = function(value, lowerBound, upperBound) {
     this.value = value;
-    this.intervalWidth = intervalWidth;
+    this.lowerBound = lowerBound;
+    this.upperBound = upperBound;
 }
-Abba.ValueWithInterval.prototype = {
-    range: function() {
-        return {
-            lowerBound: this.value - this.intervalWidth,
-            upperBound: this.value + this.intervalWidth
-        };
-    }
-};
 
 // A value with standard error, from which a confidence interval can be derived.
 Abba.ValueWithError = function(value, error) {
@@ -128,8 +121,14 @@ Abba.ValueWithError.prototype = {
         return criticalZValue * this.error;
     },
 
-    valueWithInterval: function(criticalZValue) {
-        return new Abba.ValueWithInterval(this.value, this.confidenceIntervalWidth(criticalZValue));
+    valueWithInterval: function(criticalZValue, estimatedValue) {
+        var intervalWidth = this.confidenceIntervalWidth(criticalZValue);
+        if (estimatedValue === undefined) {
+            estimatedValue = this.value;
+        }
+        return new Abba.ValueWithInterval(estimatedValue,
+                                          this.value - intervalWidth,
+                                          this.value + intervalWidth);
     }
 };
 
@@ -165,28 +164,27 @@ Abba.Proportion.prototype = {
     }
 };
 
-Abba.ProportionComparison = function(baseline, variation, zCriticalValue) {
+Abba.ProportionComparison = function(baseline, variation) {
     this.baseline = baseline;
     this.variation = variation;
-    this._zCriticalValue = zCriticalValue;
     this._standardNormal = new Abba.NormalDistribution();
 }
 Abba.ProportionComparison.prototype = {
     // Generate an estimate of the difference in success rates between the variation and the
     // baseline.
-    differenceEstimate: function() {
-        var baselineP = this.baseline.pEstimate(this._zCriticalValue);
-        var variationP = this.variation.pEstimate(this._zCriticalValue);
+    differenceEstimate: function(zCriticalValue) {
+        var baselineP = this.baseline.pEstimate(zCriticalValue);
+        var variationP = this.variation.pEstimate(zCriticalValue);
         var difference = variationP.value - baselineP.value;
         var standardError = Math.sqrt(Math.pow(baselineP.error, 2) + Math.pow(variationP.error, 2));
         return new Abba.ValueWithError(difference, standardError);
     },
 
     // Return the difference in sucess rates as a proportion of the baseline success rate.
-    differenceRatio: function() {
-        var baselineValue = this.baseline.pEstimate(this._zCriticalValue).value;
-        var ratio = this.differenceEstimate().value / baselineValue;
-        var error = this.differenceEstimate().error / baselineValue;
+    differenceRatio: function(zCriticalValue) {
+        var baselineValue = this.baseline.pEstimate(zCriticalValue).value;
+        var ratio = this.differenceEstimate(zCriticalValue).value / baselineValue;
+        var error = this.differenceEstimate(zCriticalValue).error / baselineValue;
         return new Abba.ValueWithError(ratio, error);
     },
 
@@ -292,19 +290,21 @@ Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrial
 }
 Abba.Experiment.prototype = {
     getBaselineProportion: function() {
-        return this._baseline.pEstimate(this._trialIntervalZCriticalValue).valueWithInterval(
-            this._trialIntervalZCriticalValue);
+        return this._baseline
+            .pEstimate(this._trialIntervalZCriticalValue)
+            .valueWithInterval(this._trialIntervalZCriticalValue, this._baseline.pEstimate(0).value);
     },
 
     getResults: function(numSuccesses, numTrials) {
         var trial = new Abba.Proportion(numSuccesses, numTrials);
-        var comparison = new Abba.ProportionComparison(
-            this._baseline, trial, this._trialIntervalZCriticalValue);
+        var comparison = new Abba.ProportionComparison(this._baseline, trial);
         return {
-            proportion: trial.pEstimate(this._trialIntervalZCriticalValue).valueWithInterval(
-                this._trialIntervalZCriticalValue),
-            relativeImprovement: comparison.differenceRatio().valueWithInterval(
-                this._zCriticalValue),
+            proportion: trial
+                .pEstimate(this._trialIntervalZCriticalValue)
+                .valueWithInterval(this._trialIntervalZCriticalValue, trial.pEstimate(0).value),
+            relativeImprovement: comparison
+                .differenceRatio(this._trialIntervalZCriticalValue)
+                .valueWithInterval(this._zCriticalValue, comparison.differenceRatio(0).value),
             pValue: comparison.iteratedTest(this._numComparisons, this.P_VALUE_PRECISION)
         };
     }

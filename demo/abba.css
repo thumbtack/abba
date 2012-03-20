@@ -183,3 +183,16 @@ input[type=text] {
 .results thead th {
     padding-left: 0;
 }
+
+.interval {
+    text-align: center;
+}
+
+.interval > .base {
+    font-size: smaller;
+    color: #6a6a6a;
+}
+
+.result-row > * {
+    vertical-align: top;
+}

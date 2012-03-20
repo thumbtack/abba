@@ -24,14 +24,14 @@ describe('ResultsPresenter', function() {
         experimentParams.variationData = [];
 
         this.getBaselineProportion = function() {
-            return new Abba.ValueWithInterval(0.5, 0.2);
+            return new Abba.ValueWithInterval(0.5, 0.3, 0.7);
         };
 
         this.getResults = function(numSuccesses, numTrials) {
             experimentParams.variationData.push([numSuccesses, numTrials]);
             return {
-                proportion: new Abba.ValueWithInterval(0.6, 0.3),
-                relativeImprovement: new Abba.ValueWithInterval(1.2, 0.15),
+                proportion: new Abba.ValueWithInterval(0.6, 0.3, 0.9),
+                relativeImprovement: new Abba.ValueWithInterval(1.2, 1.05, 1.35),
                 pValue: 0.123,
             };
         };
@@ -108,7 +108,7 @@ describe('ResultsPresenter', function() {
         expect(baselineRow.row.numSuccesses).toBe(10);
         expect(baselineRow.row.numTrials).toBe(20);
         expect(baselineRow.row.rate.value).toBe(0.5);
-        expect(baselineRow.row.rate.intervalWidth).toBe(0.2);
+        expect(baselineRow.row.rate.lowerBound).toBe(0.3);
         expect(baselineRow.row.isBlankOutcome).toBeTruthy();
         expect(baselineRow.row.range.lowerBound).toBeCloseTo(0.3);
         expect(baselineRow.row.range.upperBound).toBeCloseTo(0.7);
@@ -120,10 +120,10 @@ describe('ResultsPresenter', function() {
         expect(variationRow.row.numSuccesses).toBe(60);
         expect(variationRow.row.numTrials).toBe(100);
         expect(variationRow.row.rate.value).toBe(0.6);
-        expect(variationRow.row.rate.intervalWidth).toBe(0.3);
+        expect(variationRow.row.rate.lowerBound).toBe(0.3);
         expect(variationRow.row.pValue).toBe(0.123);
         expect(variationRow.row.improvement.value).toBe(1.2);
-        expect(variationRow.row.improvement.intervalWidth).toBe(0.15);
+        expect(variationRow.row.improvement.lowerBound).toBe(1.05);
         expect(variationRow.row.baselineRange.lowerBound).toBeCloseTo(0.3);
         expect(variationRow.row.baselineRange.upperBound).toBeCloseTo(0.7);
     });

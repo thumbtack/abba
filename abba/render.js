@@ -2,21 +2,22 @@ var Abba = (function(Abba, $, pv) {
 
 Abba.BASELINE_ALPHA = 0.05;
 
+Abba.INTERVAL_HTML = ' \
+<div class="interval"> \
+  <div class="error"><span class="lower-bound"></span> &ndash; <span class="upper-bound"></span></div> \
+  <span class="base">(<span class="base-value"></span>)</span> \
+</div>';
+
+
 Abba.RESULT_ROW_HTML = ' \
 <tr class="result-row"> \
   <th class="bucket-name"></th> \
   <td class="yes"></td> \
   <td class="total"></td> \
-  <td class="conversion-numeric"> \
-    <span class="base"></span> \
-    <span class="error">&plusmn; <span></span></span> \
-  </td> \
+  <td class="conversion-numeric"></td> \
   <td class="conversion-visual"></td> \
   <td class="p-value"></td> \
-  <td class="improvement"> \
-    <span class="base"></span> \
-    <span class="error">&plusmn; <span></span></span> \
-  </td> \
+  <td class="improvement"></td> \
 </tr>';
 
 Abba.RESULT_TABLE_HTML = ' \
@@ -36,7 +37,7 @@ Abba.RESULT_TABLE_HTML = ' \
 </table>';
 
 Abba.RESULT_COLORS = {
-    neutral: '#D8D8D8',
+    neutral: '#B8B8B8',
     lose: '#DF1210',
     win: '#48E000'
 };
@@ -82,6 +83,9 @@ Abba.Formatter.prototype = {
     },
 
     percent: function(ratio, places) {
+        if (ratio === Infinity || ratio === -Infinity) {
+            return 'N/A';
+        }
         if (places === undefined) {
             places = this._getDefaultPlaces(ratio);
         }
@@ -104,8 +108,12 @@ Abba.ResultRowView = function($row, formatter) {
 Abba.ResultRowView.prototype = {
     _renderInterval: function(valueWithInterval, $container) {
         $container
-            .find('.base').text(this._formatter.percent(valueWithInterval.value)).end()
-            .find('.error > span').text(this._formatter.percent(valueWithInterval.intervalWidth));
+            .html(Abba.INTERVAL_HTML)
+            .find('.base-value').text(this._formatter.percent(valueWithInterval.value)).end()
+            .find('.error > .lower-bound')
+                .text(this._formatter.percent(valueWithInterval.lowerBound)).end()
+            .find('.error > .upper-bound')
+                .text(this._formatter.percent(valueWithInterval.upperBound));
     },
 
     _supportsSvg: function(document) {
@@ -114,11 +122,18 @@ Abba.ResultRowView.prototype = {
         return (div.firstChild && div.firstChild.namespaceURI) == 'http://www.w3.org/2000/svg';
     },
 
+    _clampRate: function(rate) {
+        function clamp(value) {
+            return Math.max(0, Math.min(1, value));
+        }
+        return new Abba.ValueWithInterval(rate.value, clamp(rate.lowerBound), clamp(rate.upperBound));
+    },
+
     renderConversion: function(numSuccesses, numTrials, rate) {
         this._$row
             .find('.yes').text(this._formatter.describeNumber(numSuccesses)).end()
             .find('.total').text(this._formatter.describeNumber(numTrials));
-        this._renderInterval(rate, this._$row.find('.conversion-numeric'));
+        this._renderInterval(this._clampRate(rate), this._$row.find('.conversion-numeric'));
     },
 
     renderOutcome: function(pValue, improvement) {
@@ -137,7 +152,7 @@ Abba.ResultRowView.prototype = {
 
         var canvas = this._$row.find('.conversion-visual');
         var width = 200;
-        var height = 25;
+        var height = 15;
         var scale = pv.Scale
             .linear(overallRange.lowerBound, overallRange.upperBound)
             .range(0, width);
@@ -150,7 +165,8 @@ Abba.ResultRowView.prototype = {
         var panel = new pv.Panel()
             .width(width)
             .height(height)
-            .margin(10)
+            .left(10)
+            .right(10)
             .canvas(canvas[0]);
 
         var ranges = [
@@ -243,14 +259,14 @@ Abba.ResultsPresenter.prototype = {
                                                    Abba.BASELINE_ALPHA);
 
         var baselineProportion = experiment.getBaselineProportion();
-        var overallConversionBounds = {lowerBound: baselineProportion.range().lowerBound,
-                                       upperBound: baselineProportion.range().upperBound};
+        var overallConversionBounds = {lowerBound: baselineProportion.lowerBound,
+                                       upperBound: baselineProportion.upperBound};
         var variations = allInputs.variations.map(function(variation) {
             var outcome = experiment.getResults(variation.numSuccesses, variation.numTrials);
             overallConversionBounds.lowerBound = Math.min(overallConversionBounds.lowerBound,
-                                                          outcome.proportion.range().lowerBound)
+                                                          outcome.proportion.lowerBound)
             overallConversionBounds.upperBound = Math.max(overallConversionBounds.upperBound,
-                                                          outcome.proportion.range().upperBound)
+                                                          outcome.proportion.upperBound)
             return {inputs: variation, outcome: outcome};
         });
 
@@ -267,8 +283,8 @@ Abba.ResultsPresenter.prototype = {
 
         var renderConversionWithRange = function(resultRow, inputs, proportion) {
             resultRow.renderConversion(inputs.numSuccesses, inputs.numTrials, proportion)
-            resultRow.renderConversionRange(proportion.range(),
-                                            results.baselineProportion.range(),
+            resultRow.renderConversionRange(proportion,
+                                            results.baselineProportion,
                                             results.overallConversionBounds);
         };
 
