@@ -1,3 +1,5 @@
+// Copyright (c) 2012 Thumbtack, Inc.
+
 describe('Formatter', function() {
     var formatter = new Abba.Formatter();
 

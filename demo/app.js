@@ -1,3 +1,5 @@
+// Copyright (c) 2012 Thumbtack, Inc.
+
 var Abba = (function(Abba, $, Hash) {
 
 Abba.InputsView = function($form, historyIframe) {

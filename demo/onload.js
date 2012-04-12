@@ -1,3 +1,5 @@
+// Copyright (c) 2012 Thumbtack, Inc.
+
 $(function() {
     // override default result colors for charts
     Abba.RESULT_COLORS = {

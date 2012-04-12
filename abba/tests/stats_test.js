@@ -1,3 +1,5 @@
+// Copyright (c) 2012 Thumbtack, Inc.
+
 function addToBeNearMatcher(object) {
     object.addMatchers({
         // like toBeCloseTo(), but looks at absolute error rather than rounding to a fixed

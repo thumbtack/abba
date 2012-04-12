@@ -1,3 +1,5 @@
+// Copyright (c) 2012 Thumbtack, Inc.
+
 var Abba = (function(Abba, $, pv) {
 
 Abba.BASELINE_ALPHA = 0.05;

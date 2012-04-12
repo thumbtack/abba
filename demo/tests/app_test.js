@@ -1,3 +1,5 @@
+// Copyright (c) 2012 Thumbtack, Inc.
+
 describe('Presenter', function() {
     var FakeView = function() {
         this.addGroupCallback = undefined;
