@@ -41,12 +41,8 @@ Abba.NormalDistribution.prototype = {
     }
 };
 
-/* Distribution functions for the binomial distribution. Relies entirely on the normal
-   approximation.
-
-   jStat's binomial functions do not seem be to reliable or as performant for large cases. This
-   class could be improved by making it compute exact binomial functions for small cases and fall
-   back to the normal approximation for large cases.
+/* Distribution functions for the binomial distribution. Computes exact binomial results for small
+   samples and falls back on the normal approximation for large samples.
 */
 Abba.BinomialDistribution = function(numTrials, probability) {
     this.SMALL_SAMPLE_MAX_TRIALS = 100;
