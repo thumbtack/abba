@@ -269,22 +269,21 @@ Abba.ProportionComparison.prototype = {
 };
 
 // numVariations: number of variations to be compared to the baseline
-Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrials, baseAlpha) {
+Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrials, intervalAlpha) {
     this.P_VALUE_PRECISION = 1e-5;
 
     normal = new Abba.NormalDistribution();
     this._baseline = new Abba.Proportion(baselineNumSuccesses, baselineNumTrials);
 
     this._numComparisons = Math.max(1, numVariations);
-    var alpha = baseAlpha / this._numComparisons // Bonferroni correction
-    // all z-values are two-tailed
-    this._zCriticalValue = normal.inverseSurvival(alpha / 2);
+    var intervalAlpha = intervalAlpha / this._numComparisons; // Bonferroni correction
+    this._intervalZCriticalValue = normal.inverseSurvival(intervalAlpha / 2);
 }
 Abba.Experiment.prototype = {
     getBaselineProportion: function() {
         return this._baseline
-            .pEstimate(this._zCriticalValue)
-            .valueWithInterval(this._zCriticalValue, this._baseline.pEstimate(0).value);
+            .pEstimate(this._intervalZCriticalValue)
+            .valueWithInterval(this._intervalZCriticalValue, this._baseline.pEstimate(0).value);
     },
 
     getResults: function(numSuccesses, numTrials) {
@@ -292,11 +291,13 @@ Abba.Experiment.prototype = {
         var comparison = new Abba.ProportionComparison(this._baseline, trial);
         return {
             proportion: trial
-                .pEstimate(this._zCriticalValue)
-                .valueWithInterval(this._zCriticalValue, trial.pEstimate(0).value),
+                .pEstimate(this._intervalZCriticalValue)
+                .valueWithInterval(this._intervalZCriticalValue, trial.pEstimate(0).value),
             relativeImprovement: comparison
-                .differenceRatio(this._zCriticalValue)
-                .valueWithInterval(this._zCriticalValue, comparison.differenceRatio(0).value),
+                .differenceRatio(this._intervalZCriticalValue)
+                .valueWithInterval(
+                    this._intervalZCriticalValue,
+                    comparison.differenceRatio(0).value),
             pValue: comparison.iteratedTest(this._numComparisons, this.P_VALUE_PRECISION)
         };
     }

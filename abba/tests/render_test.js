@@ -19,10 +19,11 @@ describe('ResultsPresenter', function() {
     var StubExperiment = function(numVariations,
                                   baselineNumSuccesses,
                                   baselineNumTrials,
-                                  baseAlpha) {
+                                  intervalAlpha) {
         experimentParams.numVariations = numVariations;
         experimentParams.baselineNumSuccesses = baselineNumSuccesses;
         experimentParams.baselineNumTrials = baselineNumTrials;
+        experimentParams.intervalAlpha = intervalAlpha;
         experimentParams.variationData = [];
 
         this.getBaselineProportion = function() {
@@ -75,6 +76,26 @@ describe('ResultsPresenter', function() {
         };
     };
 
+    var EXPERIMENT_DATA = {
+        baseline: {
+            label: 'Baseline',
+            numSuccesses: 10,
+            numTrials: 20,
+        },
+        variations: [
+            {
+                label: 'Variation 1',
+                numSuccesses: 60,
+                numTrials: 100,
+            },
+            {
+                label: 'Variation 2',
+                numSuccesses: 70,
+                numTrials: 110,
+            },
+        ],
+    };
+
     var view = undefined;
     var presenter = new Abba.ResultsPresenter(StubExperiment);
 
@@ -85,25 +106,15 @@ describe('ResultsPresenter', function() {
     });
 
     it('computes results', function() {
-        presenter.computeAndDisplayResults({
-            baseline: {
-                label: 'Baseline',
-                numSuccesses: 10,
-                numTrials: 20,
-            },
-            variations: [{
-                label: 'Variation 1',
-                numSuccesses: 60,
-                numTrials: 100,
-            }],
-        });
+        presenter.computeAndDisplayResults(EXPERIMENT_DATA);
 
-        expect(experimentParams.numVariations).toBe(1);
+        expect(experimentParams.numVariations).toBe(2);
         expect(experimentParams.baselineNumSuccesses).toBe(10);
         expect(experimentParams.baselineNumTrials).toBe(20);
-        expect(experimentParams.variationData).toEqual([[60, 100]]);
+        expect(experimentParams.intervalAlpha).toBe(Abba.DEFAULT_INTERVAL_ALPHA);
+        expect(experimentParams.variationData).toEqual([[60, 100], [70, 110]]);
 
-        expect(view.resultRows.length).toBe(2);
+        expect(view.resultRows.length).toBe(3);
 
         var baselineRow = view.resultRows[0];
         expect(baselineRow.label).toBe('Baseline');
@@ -128,6 +139,12 @@ describe('ResultsPresenter', function() {
         expect(variationRow.row.improvement.lowerBound).toBe(1.05);
         expect(variationRow.row.baselineRange.lowerBound).toBeCloseTo(0.3);
         expect(variationRow.row.baselineRange.upperBound).toBeCloseTo(0.7);
+    });
+
+    it('obeys experiment options', function() {
+        presenter.computeAndDisplayResults(EXPERIMENT_DATA, new Abba.ExperimentOptions(0.2, false));
+        expect(experimentParams.numVariations).toBe(1);
+        expect(experimentParams.intervalAlpha).toBe(0.2);
     });
 });
 

@@ -164,7 +164,7 @@ input, button {
     font-size: 1em;
 }
 
-input[type=text] {
+.inputs-table input[type=text] {
     width: 90%;
 }
 
@@ -178,7 +178,21 @@ input[type=text] {
 }
 
 .inputs p {
-    margin-top: 1em;
+    margin-top: 0.5em;
+}
+
+.interval-confidence-level {
+    width: 4em;
+}
+
+.options {
+    margin: 0;
+}
+
+.options li {
+    list-style: none;
+    display: inline-block;
+    margin: 0 0.5em 0 0;
 }
 
 .results thead th {

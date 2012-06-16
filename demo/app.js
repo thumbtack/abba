@@ -2,9 +2,39 @@
 
 var Abba = (function(Abba, $, Hash) {
 
+Abba.TextInputView = function($element) {
+    this._$element = $element;
+}
+Abba.TextInputView.prototype = {
+    getValue: function() {
+        return this._$element.val();
+    },
+
+    setValue: function(value) {
+        this._$element.val(value);
+    }
+};
+
+Abba.CheckboxView = function($element) {
+    this._$element = $element;
+}
+Abba.CheckboxView.prototype = {
+    getValue: function() {
+        return this._$element.attr('checked') === 'checked';
+    },
+
+    setValue: function(isChecked) {
+        this._$element.attr('checked', isChecked);
+    }
+};
+
 Abba.InputsView = function($form, historyIframe) {
     this._$form = $form;
     this._historyIframe = historyIframe;
+    this.intervalConfidenceLevelInput =
+        new Abba.TextInputView($form.find('.interval-confidence-level'));
+    this.useMultipleTestCorrectionInput =
+        new Abba.CheckboxView($form.find('.use-multiple-test-correction'));
 }
 Abba.InputsView.prototype = {
     setAddGroupHandler: function(callback) {
@@ -91,7 +121,9 @@ Abba.InputsView.prototype = {
 };
 
 Abba.Presenter = function(abTestClass) {
-    this._abTestClass = abTestClass;
+    this.OPTION_LABEL = 'abba:';
+
+    this._abbaClass = abTestClass;
     this._inputsView = undefined;
     this._$resultsContainer = undefined;
 }
@@ -129,45 +161,82 @@ Abba.Presenter.prototype = {
         this._inputsView.addInputRow(this._chooseGroupName());
     },
 
-    _serializeInputs: function(inputs) {
+    _serializeState: function() {
         var data = {};
         function addRow(rowData) {
             data[rowData.label] = rowData.numSuccesses + ',' + rowData.numSamples;
         }
+        var inputs = this._inputsView.getInputs();
         addRow(inputs.baseline);
         inputs.variations.forEach(function(variation) { addRow(variation); });
+
+        function addOption(name, value) {
+            data['abba:' + name] = value;
+        }
+        addOption(
+            'intervalConfidenceLevel',
+            this._inputsView.intervalConfidenceLevelInput.getValue()
+        );
+        addOption(
+            'useMultipleTestCorrection',
+            this._inputsView.useMultipleTestCorrectionInput.getValue()
+        );
+
         return $.param(data);
     },
 
-    _deserializeInputs: function(hash) {
+    _parseOption: function(name, valueString) {
+        switch(name) {
+            case 'intervalConfidenceLevel':
+                this._inputsView.intervalConfidenceLevelInput.setValue(valueString)
+                break;
+            case 'useMultipleTestCorrection':
+                this._inputsView.useMultipleTestCorrectionInput.setValue(valueString === 'true');
+                break;
+        }
+    },
+
+    _deserializeState: function(hash) {
         var variations = [];
+        var self = this;
         hash.split('&').forEach(function(parameter_string) {
             var parts = parameter_string.split('=').map(function(piece) {
                 return decodeURIComponent(piece.replace(/\+/g, ' '));
             });
-            var valueParts = parts[1].split(',').map(function(value) { return parseInt(value); });
-            variations.push({
-                label: parts[0],
-                numSuccesses: valueParts[0],
-                numSamples: valueParts[1]
-            });
+            var colonSplit = parts[0].split(':');
+            if (colonSplit[0] == 'abba') {
+                self._parseOption(colonSplit[1], parts[1]);
+            } else {
+                var valueParts = parts[1].split(',').map(
+                    function(value) { return parseInt(value); }
+                );
+                variations.push({
+                    label: parts[0],
+                    numSuccesses: valueParts[0],
+                    numSamples: valueParts[1]
+                });
+            }
         });
 
         var baseline = variations.shift();
-        return {
-            baseline: baseline,
-            variations: variations
-        };
+        this._inputsView.setInputs({baseline: baseline, variations: variations});
     },
 
     _triggerComputation: function() {
-        this._inputsView.goToHash(this._serializeInputs(this._inputsView.getInputs()));
+        this._inputsView.goToHash(this._serializeState());
     },
 
-    _renderResults: function(inputs) {
-        var test = new this._abTestClass(inputs.baseline.label,
-                                         inputs.baseline.numSuccesses,
-                                         inputs.baseline.numSamples);
+    _renderResults: function(state) {
+        var inputs = this._inputsView.getInputs();
+        var test = new this._abbaClass(inputs.baseline.label,
+                                       inputs.baseline.numSuccesses,
+                                       inputs.baseline.numSamples);
+        test.setIntervalAlpha(
+            1 - parseFloat(this._inputsView.intervalConfidenceLevelInput.getValue())
+        );
+        test.setMultipleTestCorrectionEnabled(
+            this._inputsView.useMultipleTestCorrectionInput.getValue()
+        );
         inputs.variations.forEach(function(variation) {
             test.addVariation(variation.label, variation.numSuccesses, variation.numSamples);
         });
@@ -177,14 +246,15 @@ Abba.Presenter.prototype = {
     _handleHistoryChange: function(hash) {
         this._$resultsContainer.hide();
         if (hash) {
-            var inputs = this._deserializeInputs(hash);
-            this._inputsView.setInputs(inputs);
-            this._renderResults(inputs);
+            this._deserializeState(hash);
+            this._renderResults();
         } else {
             this._inputsView.setInputs({
                 baseline: {label: 'Baseline'},
                 variations: [{label: 'Variation 1'}]
             });
+            this._inputsView.intervalConfidenceLevelInput.setValue(1 - Abba.DEFAULT_INTERVAL_ALPHA);
+            this._inputsView.useMultipleTestCorrectionInput.setValue(true);
         }
     }
 };

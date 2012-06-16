@@ -2,7 +2,7 @@
 
 var Abba = (function(Abba, $, pv) {
 
-Abba.BASELINE_ALPHA = 0.05;
+Abba.DEFAULT_INTERVAL_ALPHA = 0.05;
 
 Abba.INTERVAL_HTML = ' \
 <div class="interval"> \
@@ -244,6 +244,13 @@ Abba.ResultsView.prototype = {
     }
 };
 
+Abba.ExperimentOptions = function(intervalAlpha, useMultipleTestCorrection) {
+    this.intervalAlpha = intervalAlpha;
+    this.useMultipleTestCorrection = useMultipleTestCorrection;
+}
+Abba.ExperimentOptions.defaults = function() {
+    return new Abba.ExperimentOptions(Abba.DEFAULT_INTERVAL_ALPHA, true);
+}
 
 Abba.ResultsPresenter = function(experimentClass) {
     this._view = undefined;
@@ -254,16 +261,26 @@ Abba.ResultsPresenter.prototype = {
         this._view = view;
     },
 
-    _computeResults: function(allInputs) {
-        var experiment = new this._experimentClass(allInputs.variations.length,
-                                                   allInputs.baseline.numSuccesses,
-                                                   allInputs.baseline.numTrials,
-                                                   Abba.BASELINE_ALPHA);
+    makeExperiment: function(baseline, variations, options) {
+        if (options === undefined) {
+            options = Abba.ExperimentOptions.defaults();
+        }
+        return new this._experimentClass(
+            options.useMultipleTestCorrection ? variations.length : 1,
+            baseline.numSuccesses,
+            baseline.numTrials,
+            options.intervalAlpha
+                ? options.intervalAlpha
+                : Abba.DEFAULT_INTERVAL_CONFIDENCE_LEVEL
+        );
+    },
 
+    _computeResults: function(baseline, variations, options) {
+        var experiment = this.makeExperiment(baseline, variations, options);
         var baselineProportion = experiment.getBaselineProportion();
         var overallConversionBounds = {lowerBound: baselineProportion.lowerBound,
                                        upperBound: baselineProportion.upperBound};
-        var variations = allInputs.variations.map(function(variation) {
+        var variations = variations.map(function(variation) {
             var outcome = experiment.getResults(variation.numSuccesses, variation.numTrials);
             overallConversionBounds.lowerBound = Math.min(overallConversionBounds.lowerBound,
                                                           outcome.proportion.lowerBound)
@@ -279,9 +296,9 @@ Abba.ResultsPresenter.prototype = {
         };
     },
 
-    computeAndDisplayResults: function(allInputs) {
+    computeAndDisplayResults: function(allInputs, options) {
         this._view.clearResults();
-        var results = this._computeResults(allInputs);
+        var results = this._computeResults(allInputs.baseline, allInputs.variations, options);
 
         var renderConversionWithRange = function(resultRow, inputs, proportion) {
             resultRow.renderConversion(inputs.numSuccesses, inputs.numTrials, proportion)
@@ -315,25 +332,37 @@ Abba.Abba = function(baselineName, baselineNumSuccesses, baselineNumTrials) {
         numTrials: baselineNumTrials
     };
     this._variations = [];
+    this._options = Abba.ExperimentOptions.defaults();
+    this._presenter = new Abba.ResultsPresenter(Abba.Experiment);
 }
 Abba.Abba.prototype = {
+    setIntervalAlpha: function(alpha) {
+        this._options.intervalAlpha = alpha;
+    },
+
+    setMultipleTestCorrectionEnabled: function(isEnabled) {
+        this._options.useMultipleTestCorrection = isEnabled;
+    },
+
     addVariation: function(label, numSuccesses, numTrials) {
         this._variations.push({label: label, numSuccesses: numSuccesses, numTrials: numTrials});
     },
 
     renderTo: function(container) {
-        var presenter = new Abba.ResultsPresenter(Abba.Experiment);
-        presenter.bind(new Abba.ResultsView($(container)));
-        presenter.computeAndDisplayResults(
-            {baseline: this._baseline, variations: this._variations});
+        this._presenter.bind(new Abba.ResultsView($(container)));
+        this._presenter.computeAndDisplayResults(
+            {baseline: this._baseline, variations: this._variations},
+            this._options
+        );
     },
 
     getResults: function() {
-        var experiment = new Abba.Experiment(this._variations.length,
-                                             this._baseline.numSuccesses,
-                                             this._baseline.numTrials,
-                                             Abba.BASELINE_ALPHA);
-        results = {}
+        var experiment = this._presenter.makeExperiment(
+            this._baseline,
+            this._variations,
+            this._options
+        );
+        var results = {}
         results[this._baseline.label] = experiment.getBaselineProportion();
         this._variations.forEach(function(variation) {
             results[variation.label] = experiment.getResults(variation.numSuccesses,

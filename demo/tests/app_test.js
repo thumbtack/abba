@@ -1,6 +1,18 @@
 // Copyright (c) 2012 Thumbtack, Inc.
 
 describe('Presenter', function() {
+    var FakeInputView = function() {
+        this.value = null;
+
+        this.getValue = function() {
+            return this.value;
+        };
+
+        this.setValue = function(value) {
+            this.value = value;
+        };
+    };
+
     var FakeView = function() {
         this.addGroupCallback = undefined;
         this.computeCallback = undefined;
@@ -8,6 +20,11 @@ describe('Presenter', function() {
         this.historyHash = undefined;
         this.addedInputs = [];
         this.inputsThatWereSet = undefined;
+
+        this.intervalConfidenceLevelInput = new FakeInputView();
+        this.intervalConfidenceLevelInput.value = '0.8';
+        this.useMultipleTestCorrectionInput = new FakeInputView();
+        this.useMultipleTestCorrectionInput.value = false;
 
         this.setAddGroupHandler = function(callback) {
             this.addGroupCallback = callback;
@@ -61,10 +78,11 @@ describe('Presenter', function() {
         };
     };
 
-    var renderedContainer = undefined;
-    var renderedData = undefined;
+    var fakeAbbaInstance = undefined;
 
-    var FakeAbTest = function(baselineLabel, baselineNumSuccesses, baselineNumSamples) {
+    var FakeAbba = function(baselineLabel, baselineNumSuccesses, baselineNumSamples) {
+        fakeAbbaInstance = this;
+
         this._baseline = {
             name: baselineLabel,
             numSuccesses: baselineNumSuccesses,
@@ -72,24 +90,34 @@ describe('Presenter', function() {
         };
         this._variations = [];
         this._renderedContainer = undefined;
+        this._renderedData = undefined;
+        this._intervalAlpha = undefined;
+        this._useMultipleTestCorrection = undefined;
+
+        this.setIntervalAlpha = function(alpha) {
+            this._intervalAlpha = alpha;
+        },
+
+        this.setMultipleTestCorrectionEnabled = function(isEnabled) {
+            this._useMultipleTestCorrection = isEnabled;
+        },
 
         this.addVariation = function(name, numSuccesses, numSamples) {
             this._variations.push({name: name, numSuccesses: numSuccesses, numSamples: numSamples});
         };
 
         this.renderTo = function(container) {
-            renderedContainer = container;
-            renderedData = {baseline: this._baseline, variations: this._variations};
+            this._renderedContainer = container;
+            this._renderedData = {baseline: this._baseline, variations: this._variations};
         };
     };
 
     var view = undefined;
     var resultsContainer = undefined;
-    var presenter = new Abba.Presenter(FakeAbTest);
+    var presenter = new Abba.Presenter(FakeAbba);
 
     beforeEach(function() {
-        renderedContainer = undefined;
-        renderedData = undefined;
+        fakeAbbaInstance = undefined;
         view = new FakeView();
         resultsContainer = new FakeElement();
         presenter.bind(view, resultsContainer);
@@ -104,16 +132,18 @@ describe('Presenter', function() {
         view.computeCallback();
 
         expect(resultsContainer._hidden).toBeTruthy();
-        expect(renderedContainer).toBe(resultsContainer);
+        expect(fakeAbbaInstance._intervalAlpha).toBeCloseTo(0.2);
+        expect(fakeAbbaInstance._useMultipleTestCorrection).toBeFalsy();
+        expect(fakeAbbaInstance._renderedContainer).toBe(resultsContainer);
 
-        expect(renderedData.variations.length).toBe(2);
-        expect(renderedData.baseline.name).toBe('Baseline');
-        expect(renderedData.baseline.numSuccesses).toBe(10);
-        expect(renderedData.baseline.numSamples).toBe(20);
-        expect(renderedData.variations[0].name).toBe('Variation 1');
-        expect(renderedData.variations[0].numSuccesses).toBe(60);
-        expect(renderedData.variations[0].numSamples).toBe(100);
-        expect(renderedData.variations[1].name).toBe('Variation 1 <2> + 3');
+        expect(fakeAbbaInstance._renderedData.variations.length).toBe(2);
+        expect(fakeAbbaInstance._renderedData.baseline.name).toBe('Baseline');
+        expect(fakeAbbaInstance._renderedData.baseline.numSuccesses).toBe(10);
+        expect(fakeAbbaInstance._renderedData.baseline.numSamples).toBe(20);
+        expect(fakeAbbaInstance._renderedData.variations[0].name).toBe('Variation 1');
+        expect(fakeAbbaInstance._renderedData.variations[0].numSuccesses).toBe(60);
+        expect(fakeAbbaInstance._renderedData.variations[0].numSamples).toBe(100);
+        expect(fakeAbbaInstance._renderedData.variations[1].name).toBe('Variation 1 <2> + 3');
     });
 
     it('handles history', function() {
@@ -122,10 +152,14 @@ describe('Presenter', function() {
 
         // "Reload" the app
         view = new FakeView();
-        presenter = new Abba.Presenter(FakeAbTest);
+        view.intervalConfidenceLevelInput.value = undefined;
+        view.useMultipleTestCorrectionInput.value = undefined;
+        presenter = new Abba.Presenter(FakeAbba);
         presenter.bind(view, resultsContainer);
 
         view.historyCallback(oldView.historyHash);
         expect(view.inputsThatWereSet).toEqual(oldView.getInputs());
+        expect(view.intervalConfidenceLevelInput.value).toBe('0.8');
+        expect(view.useMultipleTestCorrectionInput.value).toBe(false);
     });
 });
