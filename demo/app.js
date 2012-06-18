@@ -121,7 +121,7 @@ Abba.InputsView.prototype = {
 };
 
 Abba.Presenter = function(abTestClass) {
-    this.OPTION_LABEL = 'abba:';
+    this._OPTION_LABEL = 'abba';
 
     this._abbaClass = abTestClass;
     this._inputsView = undefined;
@@ -179,8 +179,9 @@ Abba.Presenter.prototype = {
         addRow(inputs.baseline);
         inputs.variations.forEach(function(variation) { addRow(variation); });
 
+        var self = this;
         function addOption(name, value) {
-            data['abba:' + name] = value;
+            data[self._OPTION_LABEL + ':' + name] = value;
         }
         addOption(
             'intervalConfidenceLevel',
@@ -213,7 +214,7 @@ Abba.Presenter.prototype = {
                 return decodeURIComponent(piece.replace(/\+/g, ' '));
             });
             var colonSplit = parts[0].split(':');
-            if (colonSplit[0] == 'abba') {
+            if (colonSplit[0] == self._OPTION_LABEL) {
                 self._parseOption(colonSplit[1], parts[1]);
             } else {
                 var valueParts = parts[1].split(',').map(
