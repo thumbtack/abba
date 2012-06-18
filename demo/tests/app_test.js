@@ -162,4 +162,10 @@ describe('Presenter', function() {
         expect(view.intervalConfidenceLevelInput.value).toBe('0.8');
         expect(view.useMultipleTestCorrectionInput.value).toBe(false);
     });
+
+    it('allows percentage confidence level input', function() {
+        view.intervalConfidenceLevelInput.value = '97';
+        view.computeCallback();
+        expect(fakeAbbaInstance._intervalAlpha).toBeCloseTo(0.03);
+    });
 });

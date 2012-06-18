@@ -161,6 +161,15 @@ Abba.Presenter.prototype = {
         this._inputsView.addInputRow(this._chooseGroupName());
     },
 
+    _readIntervalConfidenceLevel: function() {
+        var value = parseFloat(this._inputsView.intervalConfidenceLevelInput.getValue());
+        if (value > 1) {
+            // assume the user entered a percentage
+            value /= 100;
+        }
+        return value;
+    },
+
     _serializeState: function() {
         var data = {};
         function addRow(rowData) {
@@ -175,7 +184,7 @@ Abba.Presenter.prototype = {
         }
         addOption(
             'intervalConfidenceLevel',
-            this._inputsView.intervalConfidenceLevelInput.getValue()
+            this._readIntervalConfidenceLevel()
         );
         addOption(
             'useMultipleTestCorrection',
