@@ -280,7 +280,7 @@ Abba.ResultsPresenter.prototype = {
         var baselineProportion = experiment.getBaselineProportion();
         var overallConversionBounds = {lowerBound: baselineProportion.lowerBound,
                                        upperBound: baselineProportion.upperBound};
-        var vars = variations.map(function(variation) {
+        var variationResults = variations.map(function(variation) {
             var outcome = experiment.getResults(variation.numSuccesses, variation.numTrials);
             overallConversionBounds.lowerBound = Math.min(overallConversionBounds.lowerBound,
                                                           outcome.proportion.lowerBound);
@@ -292,7 +292,7 @@ Abba.ResultsPresenter.prototype = {
         return {
             baselineProportion: baselineProportion,
             overallConversionBounds: overallConversionBounds,
-            variations: vars
+            variations: variationResults
         };
     },
 

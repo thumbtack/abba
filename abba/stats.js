@@ -276,8 +276,8 @@ Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrial
     this._baseline = new Abba.Proportion(baselineNumSuccesses, baselineNumTrials);
 
     this._numComparisons = Math.max(1, numVariations);
-    var alpha = intervalAlpha / this._numComparisons; // Bonferroni correction
-    this._intervalZCriticalValue = normal.inverseSurvival(alpha / 2);
+    var correctedAlpha = intervalAlpha / this._numComparisons; // Bonferroni correction
+    this._intervalZCriticalValue = normal.inverseSurvival(correctedAlpha / 2);
 };
 Abba.Experiment.prototype = {
     getBaselineProportion: function() {
