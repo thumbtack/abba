@@ -99,13 +99,13 @@ Abba.ValueWithInterval = function(value, lowerBound, upperBound) {
     this.value = value;
     this.lowerBound = lowerBound;
     this.upperBound = upperBound;
-}
+};
 
 // A value with standard error, from which a confidence interval can be derived.
 Abba.ValueWithError = function(value, error) {
     this.value = value;
     this.error = error;
-}
+};
 Abba.ValueWithError.prototype = {
     /* criticalZValue should be the value at which the right-tail probability for a standard
        normal distribution equals half the desired alpha = 1 - confidence level:
@@ -135,7 +135,7 @@ Abba.Proportion = function(numSuccesses, numTrials) {
     this.numSuccesses = numSuccesses;
     this.numTrials = numTrials;
     this._binomial = new Abba.BinomialDistribution(numTrials, numSuccesses / numTrials);
-}
+};
 Abba.Proportion.prototype = {
     /* Compute an estimate of the underlying probability of success.
 
@@ -166,7 +166,7 @@ Abba.ProportionComparison = function(baseline, variation) {
     this.baseline = baseline;
     this.variation = variation;
     this._standardNormal = new Abba.NormalDistribution();
-}
+};
 Abba.ProportionComparison.prototype = {
     // Generate an estimate of the difference in success rates between the variation and the
     // baseline.
@@ -225,14 +225,14 @@ Abba.ProportionComparison.prototype = {
     iteratedTest: function(numTests, coverageAlpha) {
         var observedAbsoluteDelta = Math.abs(
             this.variation.pEstimate(0).value - this.baseline.pEstimate(0).value);
-        if (observedAbsoluteDelta == 0) {
+        if (observedAbsoluteDelta === 0) {
             // a trivial case that the code below does not handle well
             return 1;
         }
 
         var pooledProportion =
-            (this.baseline.numSuccesses + this.variation.numSuccesses)
-            / (this.baseline.numTrials + this.variation.numTrials);
+            (this.baseline.numSuccesses + this.variation.numSuccesses) /
+            (this.baseline.numTrials + this.variation.numTrials);
         var variationDistribution = new Abba.BinomialDistribution(this.variation.numTrials,
                                                                   pooledProportion);
         var baselineDistribution = new Abba.BinomialDistribution(this.baseline.numTrials,
@@ -251,8 +251,8 @@ Abba.ProportionComparison.prototype = {
             // p-value of variation success counts "at least as extreme" for this particular
             // baseline success count
             var pValueAtBaseline =
-                variationDistribution.cdf(lowerTrialCount)
-                + variationDistribution.survival(upperTrialCount - 1);
+                variationDistribution.cdf(lowerTrialCount) +
+                variationDistribution.survival(upperTrialCount - 1);
 
             // this is exact because we're conditioning on the baseline count, so the multiple
             // tests are independent.
@@ -276,9 +276,9 @@ Abba.Experiment = function(numVariations, baselineNumSuccesses, baselineNumTrial
     this._baseline = new Abba.Proportion(baselineNumSuccesses, baselineNumTrials);
 
     this._numComparisons = Math.max(1, numVariations);
-    var intervalAlpha = intervalAlpha / this._numComparisons; // Bonferroni correction
-    this._intervalZCriticalValue = normal.inverseSurvival(intervalAlpha / 2);
-}
+    var correctedAlpha = intervalAlpha / this._numComparisons; // Bonferroni correction
+    this._intervalZCriticalValue = normal.inverseSurvival(correctedAlpha / 2);
+};
 Abba.Experiment.prototype = {
     getBaselineProportion: function() {
         return this._baseline

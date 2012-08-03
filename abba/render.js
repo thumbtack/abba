@@ -44,7 +44,7 @@ Abba.RESULT_COLORS = {
     win: '#48E000'
 };
 
-Abba.Formatter = function() {}
+Abba.Formatter = function() {};
 Abba.Formatter.prototype = {
     describeNumber: function(number, decimalSpots) {
         if (!decimalSpots) {
@@ -85,7 +85,7 @@ Abba.Formatter.prototype = {
     },
 
     percent: function(ratio, places) {
-        if (ratio === Infinity || ratio === -Infinity) {
+        if (ratio === Infinity || ratio === -Infinity || isNaN(ratio)) {
             return 'N/A';
         }
         if (places === undefined) {
@@ -101,12 +101,12 @@ Abba.Formatter.prototype = {
             return pValue.toFixed(this._getDefaultPlaces(pValue) + 2);
         }
     }
-}
+};
 
 Abba.ResultRowView = function($row, formatter) {
     this._$row = $row;
     this._formatter = formatter;
-}
+};
 Abba.ResultRowView.prototype = {
     _renderInterval: function(valueWithInterval, $container) {
         $container
@@ -226,7 +226,7 @@ Abba.ResultsView = function($container) {
 
     $container.html(Abba.RESULT_TABLE_HTML);
     $container.hide();
-}
+};
 Abba.ResultsView.prototype = {
     addResultRow: function(label) {
         this._$container.show();
@@ -247,15 +247,15 @@ Abba.ResultsView.prototype = {
 Abba.ExperimentOptions = function(intervalAlpha, useMultipleTestCorrection) {
     this.intervalAlpha = intervalAlpha;
     this.useMultipleTestCorrection = useMultipleTestCorrection;
-}
+};
 Abba.ExperimentOptions.defaults = function() {
     return new Abba.ExperimentOptions(Abba.DEFAULT_INTERVAL_ALPHA, true);
-}
+};
 
 Abba.ResultsPresenter = function(experimentClass) {
     this._view = undefined;
     this._experimentClass = experimentClass;
-}
+};
 Abba.ResultsPresenter.prototype = {
     bind: function(view) {
         this._view = view;
@@ -269,9 +269,9 @@ Abba.ResultsPresenter.prototype = {
             options.useMultipleTestCorrection ? variations.length : 1,
             baseline.numSuccesses,
             baseline.numTrials,
-            options.intervalAlpha
-                ? options.intervalAlpha
-                : Abba.DEFAULT_INTERVAL_CONFIDENCE_LEVEL
+            options.intervalAlpha ?
+                options.intervalAlpha :
+                Abba.DEFAULT_INTERVAL_CONFIDENCE_LEVEL
         );
     },
 
@@ -280,19 +280,19 @@ Abba.ResultsPresenter.prototype = {
         var baselineProportion = experiment.getBaselineProportion();
         var overallConversionBounds = {lowerBound: baselineProportion.lowerBound,
                                        upperBound: baselineProportion.upperBound};
-        var variations = variations.map(function(variation) {
+        var variationResults = variations.map(function(variation) {
             var outcome = experiment.getResults(variation.numSuccesses, variation.numTrials);
             overallConversionBounds.lowerBound = Math.min(overallConversionBounds.lowerBound,
-                                                          outcome.proportion.lowerBound)
+                                                          outcome.proportion.lowerBound);
             overallConversionBounds.upperBound = Math.max(overallConversionBounds.upperBound,
-                                                          outcome.proportion.upperBound)
+                                                          outcome.proportion.upperBound);
             return {inputs: variation, outcome: outcome};
         });
 
         return {
             baselineProportion: baselineProportion,
             overallConversionBounds: overallConversionBounds,
-            variations: variations
+            variations: variationResults
         };
     },
 
@@ -301,7 +301,7 @@ Abba.ResultsPresenter.prototype = {
         var results = this._computeResults(allInputs.baseline, allInputs.variations, options);
 
         var renderConversionWithRange = function(resultRow, inputs, proportion) {
-            resultRow.renderConversion(inputs.numSuccesses, inputs.numTrials, proportion)
+            resultRow.renderConversion(inputs.numSuccesses, inputs.numTrials, proportion);
             resultRow.renderConversionRange(proportion,
                                             results.baselineProportion,
                                             results.overallConversionBounds);
@@ -334,7 +334,7 @@ Abba.Abba = function(baselineName, baselineNumSuccesses, baselineNumTrials) {
     this._variations = [];
     this._options = Abba.ExperimentOptions.defaults();
     this._presenter = new Abba.ResultsPresenter(Abba.Experiment);
-}
+};
 Abba.Abba.prototype = {
     setIntervalAlpha: function(alpha) {
         this._options.intervalAlpha = alpha;
@@ -362,7 +362,7 @@ Abba.Abba.prototype = {
             this._variations,
             this._options
         );
-        var results = {}
+        var results = {};
         results[this._baseline.label] = experiment.getBaselineProportion();
         this._variations.forEach(function(variation) {
             results[variation.label] = experiment.getResults(variation.numSuccesses,
