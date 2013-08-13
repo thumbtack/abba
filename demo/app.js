@@ -74,11 +74,15 @@ Abba.InputsView.prototype = {
         return $row;
     },
 
+    _cleanAndParseInt: function(value) {
+        return parseInt(value.replace(',', ''));
+    },
+
     _readInputRow: function($row) {
         return {
             label: $row.find('.label-input').val(),
-            numSuccesses: parseInt($row.find('.num-successes-input').val()),
-            numSamples: parseInt($row.find('.num-samples-input').val())
+            numSuccesses: this._cleanAndParseInt($row.find('.num-successes-input').val()),
+            numSamples: this._cleanAndParseInt($row.find('.num-samples-input').val())
         };
     },
 
