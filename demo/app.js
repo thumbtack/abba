@@ -31,10 +31,13 @@ Abba.CheckboxView.prototype = {
 Abba.InputsView = function($form, historyIframe) {
     this._$form = $form;
     this._historyIframe = historyIframe;
+    this._removeRowHandler = function() {};
+
     this.intervalConfidenceLevelInput =
         new Abba.TextInputView($form.find('.interval-confidence-level'));
     this.useMultipleTestCorrectionInput =
         new Abba.CheckboxView($form.find('.use-multiple-test-correction'));
+    this._bindRemoveClickHandler(this._baselineRow());
 }
 Abba.InputsView.prototype = {
     setAddGroupHandler: function(callback) {
@@ -42,6 +45,10 @@ Abba.InputsView.prototype = {
             event.preventDefault()
             callback();
         });
+    },
+
+    setRemoveGroupHandler: function(callback) {
+        this._removeRowHandler = callback;
     },
 
     setComputeHandler: function(callback) {
@@ -59,23 +66,35 @@ Abba.InputsView.prototype = {
         Hash.go(hash);
     },
 
+    _baselineRow: function() {
+        return this._$form.find('.baseline-input-row');
+    },
+
+    _bindRemoveClickHandler: function($row) {
+        var self = this;
+        $row.find('.remove-input-link')
+            .click(function(event) {
+                event.preventDefault();
+                self._removeRowHandler($row.index());
+            });
+    },
+
     _createInputRow: function() {
-        var $row = this._$form.find('.baseline-input-row')
+        var $row = this._baselineRow()
             .clone()
             .removeClass('baseline-input-row')
             .find('input').val('').end()
             .appendTo(this._$form.find('.inputs-table'));
-        $row.find('.remove-input-link')
-            .show()
-            .click(function(event) {
-                event.preventDefault();
-                $row.remove();
-            });
+        this._bindRemoveClickHandler($row);
         return $row;
     },
 
     _cleanAndParseInt: function(value) {
-        return parseInt(value.replace(',', ''));
+        if (/^[\d,]+$/.test(value)) {
+            return parseInt(value.replace(',', ''));
+        } else {
+            return null;
+        }
     },
 
     _readInputRow: function($row) {
@@ -104,7 +123,7 @@ Abba.InputsView.prototype = {
     getInputs: function() {
         var self = this;
         return {
-            baseline: this._readInputRow(this._$form.find('.baseline-input-row')),
+            baseline: this._readInputRow(this._baselineRow()),
             variations: this._variationInputRows()
                 .map(function() {
                     return self._readInputRow($(this));
@@ -115,7 +134,7 @@ Abba.InputsView.prototype = {
 
     setInputs: function(inputs) {
         var self = this;
-        self._writeInputRow(this._$form.find('.baseline-input-row'), inputs.baseline);
+        self._writeInputRow(this._baselineRow(), inputs.baseline);
 
         this._variationInputRows().remove();
         inputs.variations.forEach(function(variation) {
@@ -139,6 +158,7 @@ Abba.Presenter.prototype = {
 
         var self = this;
         inputsView.setAddGroupHandler(function() { self._addGroup(); });
+        inputsView.setRemoveGroupHandler(function(index) { self._removeGroup(index); });
         inputsView.setComputeHandler(function() { self._triggerComputation(); });
         inputsView.setHistoryHandler(function(hash) { self._handleHistoryChange(hash); });
     },
@@ -163,6 +183,23 @@ Abba.Presenter.prototype = {
 
     _addGroup: function() {
         this._inputsView.addInputRow(this._chooseGroupName());
+    },
+
+    _removeGroup: function(groupIndex) {
+        var inputs = this._inputsView.getInputs();
+        var isBaselineGroup = (groupIndex == 0);
+        if (isBaselineGroup) {
+            if (inputs.variations.length > 0) {
+                inputs.baseline = inputs.variations[0];
+                inputs.variations.shift();
+            } else {
+                // don't allow the UI to show zero input rows -- just clear the baseline row
+                inputs.baseline = {label: '', numSuccesses: '', numSamples: ''};
+            }
+        } else {
+            inputs.variations.splice(groupIndex - 1, 1);
+        }
+        this._inputsView.setInputs(inputs);
     },
 
     _readIntervalConfidenceLevel: function() {
