@@ -111,11 +111,6 @@ Abba.InputsView.prototype = {
             .find('.num-samples-input').val(values.numSamples);
     },
 
-    addInputRow: function(name) {
-        var $row = this._createInputRow();
-        $row.find('.label-input').val(name);
-    },
-
     _variationInputRows: function() {
         return this._$form.find('.input-row').not('.baseline-input-row');
     },
@@ -181,8 +176,14 @@ Abba.Presenter.prototype = {
         }
     },
 
+    _newGroup: function(label) {
+        return {label: label, numSuccesses: null, numSamples: null};
+    },
+
     _addGroup: function() {
-        this._inputsView.addInputRow(this._chooseGroupName());
+        var inputs = this._inputsView.getInputs();
+        inputs.variations.push(this._newGroup(this._chooseGroupName()));
+        this._inputsView.setInputs(inputs);
     },
 
     _removeGroup: function(groupIndex) {
@@ -194,7 +195,7 @@ Abba.Presenter.prototype = {
                 inputs.variations.shift();
             } else {
                 // don't allow the UI to show zero input rows -- just clear the baseline row
-                inputs.baseline = {label: '', numSuccesses: '', numSamples: ''};
+                inputs.baseline = this._newGroup('');
             }
         } else {
             inputs.variations.splice(groupIndex - 1, 1);

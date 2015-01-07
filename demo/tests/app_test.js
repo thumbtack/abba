@@ -35,7 +35,6 @@ describe('Presenter', function() {
         this.computeCallback = undefined;
         this.historyCallback = undefined;
         this.historyHash = undefined;
-        this.addedInputs = [];
         this.inputsToExpose = {baseline: BASELINE, variations: [VARIATION_ONE, VARIATION_TWO]};
         this.inputsThatWereSet = undefined;
 
@@ -64,10 +63,6 @@ describe('Presenter', function() {
             this.historyHash = hash;
             this.historyCallback(hash);
         },
-
-        this.addInputRow = function(name) {
-            this.addedInputs.push(name);
-        };
 
         this.getInputs = function() {
             return this.inputsToExpose;
@@ -133,7 +128,14 @@ describe('Presenter', function() {
 
     it('adds groups', function() {
         view.addGroupCallback();
-        expect(view.addedInputs).toEqual(['Variation 2']);
+        expect(view.inputsThatWereSet).toEqual({
+            baseline: BASELINE,
+            variations: [
+                VARIATION_ONE,
+                VARIATION_TWO,
+                {label: 'Variation 2', numSuccesses: null, numSamples: null}
+            ]
+        });
     });
 
     it('removes variation groups', function() {
@@ -154,7 +156,7 @@ describe('Presenter', function() {
         view.inputsToExpose = {baseline: BASELINE, variations: []};
         view.removeGroupCallback(0);
         expect(view.inputsThatWereSet).toEqual({
-            baseline: {label: '', numSuccesses: '', numSamples: ''},
+            baseline: {label: '', numSuccesses: null, numSamples: null},
             variations: []
         });
     });
