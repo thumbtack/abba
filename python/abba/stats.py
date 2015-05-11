@@ -2,8 +2,12 @@
 
 import collections
 import math
+import sys
 
 from scipy import stats
+
+if sys.version_info >= (3,):
+    xrange = range
 
 def get_z_critical_value(alpha, two_tailed=True):
     """
