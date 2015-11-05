@@ -6,4 +6,7 @@ nice table summarizing those statistics. There's a [handy little app][github-io-
 which demonstrates how to use the library. There's a Python version under `python/`, also available
 on [PyPI](http://pypi.python.org/pypi/ABBA/).
 
-You can find plenty more details on the [live demo](http://www.thumbtack.com/labs/abba).
+You can find a usable app and detailed documentation on the
+[live demo](http://www.thumbtack.com/labs/abba).
+
+[github-io-demo]: http://thumbtack.github.io/abba/demo/abba.html
