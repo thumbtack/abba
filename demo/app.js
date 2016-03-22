@@ -135,6 +135,9 @@ Abba.InputsView.prototype = {
         inputs.variations.forEach(function(variation) {
             self._writeInputRow(self._createInputRow(), variation);
         });
+        
+        // hide the "Use multiple testing correction" toggle if only 1 variation exists
+        this._$form.toggleClass('single-variation', inputs.variations.length <= 1);
     }
 };
 

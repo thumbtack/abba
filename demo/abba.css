@@ -168,6 +168,10 @@ input, button {
     width: 90%;
 }
 
+.inputs.single-variation .use-multiple-test-correction-ui {
+    display: none;
+}
+
 .inputs, .results {
     padding: 2em;
     max-width: 800px;
