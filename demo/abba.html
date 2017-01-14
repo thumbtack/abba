@@ -35,8 +35,10 @@
                                   <input type="text" class="label-input" value="Baseline"
                                          required />
                                 </td>
-                                <td><input type="text" class="num-successes-input" required /></td>
-                                <td><input type="text" class="num-samples-input" required /></td>
+                                <td><input type="text" class="num-successes-input" required
+                                           pattern="\s*[\d,]+(\.\d*)?\s*"/></td>
+                                <td><input type="text" class="num-samples-input" required
+                                           pattern="\s*[\d,]+(\.\d*)?\s*"/></td>
                                 <td>
                                   <a href="#" class="remove-input-link">
                                     Remove
