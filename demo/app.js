@@ -90,8 +90,8 @@ Abba.InputsView.prototype = {
     },
 
     _cleanAndParseInt: function(value) {
-        if (/^[\d,]+$/.test(value)) {
-            return parseInt(value.replace(',', ''));
+        if (/^\s*[\d,]+(.\d*)?\s*$/.test(value)) {
+            return parseInt(value.replace(/[, ]/g, '').replace(/\.\d+$/, ''));
         } else {
             return null;
         }
