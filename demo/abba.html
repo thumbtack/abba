@@ -12,14 +12,16 @@
         <script src="../abba/render.js"></script>
         <script src="app.js"></script>
         <script src="onload.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-MML-AM_CHTML">
+        </script>
     </head>
     <body>
         <section class="toolkit">
             <header class="section-one">
-                <h1>ABBA</h1>
+                <h1>A<span class="b">B</span><span class="b2">B</span>A</h1>
                 <h2>A/B testing statistics</h2>
             </header>
-            <div class="section-two">
+            <div class="sub-section section-two">
                 <form class="inputs">
                     <table>
                         <thead>
@@ -61,9 +63,346 @@
                     </p>
                 </form>
             </div>
-            <div>
+            <div class="sub-section">
                 <div class="results"></div>
             </div>
+        </section>
+
+        <section class="faq shadow">
+            <h3>What is Abba?</h3>
+
+            <p>Abba helps you interpret the results of binomial experiments. In this kind of
+            experiment, you run a number of trials, each of which ends in either a "successful"
+            outcome or a "failure" outcome. Trials are divided into two or more groups, and the goal
+            of the experiment is to draw conclusions about how the chance of success differs between
+            those groups. This usually boils down to determining if the success rate is higher for
+            one group than for another.</p>
+
+            <p>In the world of consumer web, some common examples of binomial experiments would be:</p>
+
+            <ul>
+              <li>Testing variations of a signup form against the exsting form to see if either one
+              increases the signup rate.</li>
+              <li>Testing copy variations in a marketing email or a search ad to see if one of them
+              increases clickthrough rate.</li>
+              <li>Testing various pricing options for a product to determine how price affects
+              purchase rate.</li>
+            </ul>
+
+            <p>In all of these examples, the groups are the different variations, and the
+            "successful" outcome is the one where the user completes the desirable action: signing
+            up, clicking through, or purchasing.</p>
+
+            <p>Abba handles binomial experiments with any number of groups. One group is always
+            designated as the baseline and all other groups are compared against it.</p>
+
+            <p>Abba was motivated by the experiments we run daily to make data-informed product
+            decisions here at <a href="http://www.thumbtack.com">Thumbtack</a> (shameless
+            plug: <a href="http://www.thumbtack.com/jobs">we're hiring</a>!). Abba's interface was
+            inspired by Google's excellent <a href="http://www.google.com/websiteoptimizer">Website
+            Optimizer</a> tool.</p>
+
+            <h3>Why is Abba useful?</h3>
+
+            <p>The main reason to use Abba is to avoid drawing conclusions based on observed
+            anomalies that were actually due to chance. If we were to simply compare the observed
+            success rates of each group, we'd have no way to know whether a group is truly better
+            (and can be expected to perform better in the future) or whether the results were just a
+            fluke. All real-world experiments are subject to some degree of unavoidable random
+            variation &mdash; Abba helps quantify how confident we can be that our conclusions
+            reflect genuine differences between groups.</p>
+
+            <p>Also keep in mind that random variation is only one source of error in
+            experiments. External factors such as time or geography can also lead to misleading
+            results. For example, suppose you run a baseline signup form on a Monday and a new
+            variation the next day, and the variation gets substantially more signups. Is the new
+            form truly better, in that we can expect it to perform better over the long run? Or are
+            people just more inclined to sign up on Tuesdays? Or did people just sign up more on that
+            particular Tuesday because the weather was nice?</p>
+
+            <p>The best way to avoid external sources of error is to run all groups over exactly the
+            same time period and on exactly the same target population, and to randomize trials into
+            the different groups. This means, for instance, that you should not compare results for
+            new variations to prior results for the baseline &mdash; you should only compare groups
+            that were run together in the same experiment.</p>
+
+            <p>And remember: if you reach conclusions that seem too good/bad to be true, they
+            probably are! Always consider external sources of error before drawing conclusions.</p>
+
+            <h3>What do the results mean?</h3>
+
+            <p>Abba computes a few useful results:</p>
+
+            <ul>
+              <li>The estimated <strong>success rate</strong> along with a confidence interval,
+              which gives an idea of how precisely we know the &quot;true&quot; success rate based
+              on the observed data.</li>
+              <li>A <strong>p-value</strong> which gives an idea of how confident we are that the
+              two groups truly have different chances of success. The lower the p-value, the more
+              confident we are that the given group is actually different from the baseline. 5% and
+              1% are the most common thresholds used to declare &quot;statistical
+              significance&quot;, but I encourage you to read below for more details. Note that the
+              p-value says nothing about the magnitude of the difference between success rates,
+              which is often of greater importance. This is why we also compute...</li>
+              <li>The estimated <strong>improvement</strong> in success rate as a percentage
+              relative to the baseline success rate. This value also includes a confidence interval
+              which gives an idea of how much practically better or worse a variation might be
+              compared to the baseline.</li>
+            </ul>
+
+            <p>As you may have noticed, Abba updates the URL fragment for each report you generate,
+            so you can easily share reports by copying the URL and sending it to your friends,
+            coworkers, Twitter followers, blog readers, or maybe just Mom.</p>
+
+            <h3>How does the code work?</h3>
+
+            <p><code>abba/stats.js</code> implements all of the statistics (detailed below). It relies
+            on the <a href="http://www.jstat.org">jStat</a> library for approximations to normal and
+            binomial distribution functions.</p>
+
+            <p><code>abba/render.js</code> displays the test results given trial and success counts for
+            each group. It can be reused in your own applications &mdash; the <code>Abba</code>
+            class provides a friendly interface, e.g.,</p>
+
+            <pre><code>
+    abba = new Abba('Existing version', 20, 100);
+    abba.addVariation('Red button', 25, 100);
+    abba.addVariation('Green button', 30, 100);
+    abba.renderTo($('#results'));
+            </code></pre>
+
+            <p><code>render.js</code> isolates the DOM manipulation code in view classes so that the
+            rest of the logic (in <code>ResultsPresenter</code>) can be easily tested. We use
+            <a href="http://mbostock.github.com/protovis/">Protovis</a> to render the visual
+            confidence intervals.</p>
+
+            <p>The rest of the demo app is implemented in <code>demo/app.js</code> as both a useful tool
+            and an example of how you might use Abba as a library yourself. It
+            uses <a href="http://github.com/blixt/js-hash">js-hash</a> for history handling.</p>
+
+            <p>All three modules are unit tested
+            using <a href="http://pivotal.github.com/jasmine/">Jasmine</a>, and of course we rely on
+            the wonderful <a href="http://jquery.com">jQuery</a>.</p>
+
+            <p>You can find all of the source in
+            our <a href="https://github.com/thumbtack/abba">github repo</a>.</p>
+
+            <h3>What's a p-value?</h3>
+
+            <p> Suppose we run an experiment with two versions of a signup form, in which 100
+            (randomly chosen) users see an experimental form B and the remaining users see the
+            existing form A. Suppose more users sign up with form B than with form A. We'd like to
+            conclude that we've found a real improvement: form B actually has a higher
+            &quot;true&quot; signup rate. Unfortunately, there's another possible explanation: that
+            both forms have the same &quot;true&quot; signup rate, but form B &quot;got lucky&quot;
+            and had more signups just by random chance.</p>
+
+            <p>The p-value helps quantify our confidence that form B really is better and didn't
+            just &quot;get lucky&quot;. If we assume the two forms actually do have the same signup
+            rate, the p-value is the probability of observing a discrepancy as large as the one we
+            actually saw. A p-value of 1% means that if the two forms really are the same, then we
+            just happened to get a one in 100 outcome. That's pretty unlikely, and in most cases
+            we'd be willing to accept that form B really is better. With a p-value of 25%, on the
+            other hand, the observed discrepancy isn't all that unlikely even if the two forms have
+            exactly the same signup rate. We can't conclude that they acutally do have the same
+            signup rate &mdash; all we know is that we can't conclude they're different (and that we
+            need more data to have any confidence in such a conclusion).</p>
+
+            <p>It turns out there's another interpretation for the p-value. Suppose we accept any
+            result with a p-value below 5%. Then if we run many such tests where the two forms
+            actually are the same, we'd expect about 5% of cases to generate a discrepency large
+            enough for us to accept, just by chance. So the p-value can be thought of as the chance
+            of accepting a false positive over many such experiments.</p>
+
+            <p>As noted above, the p-value says nothing about the <em>magnitude</em> of the
+            difference between the two forms. The p-value is only distinguishing between
+            &quot;they're the same&quot; and &quot;they're different&quot;, but &quot;they're
+            different&quot; may mean &quot;they're different by 0.001%&quot;. If you have a billion
+            users try each form, you'll probably get a tiny p-value, but that doesn't mean that the
+            difference is meaningful to your business. The relative improvement confidence interval
+            tends to be much more useful for making practical decisions.</p>
+
+            <p>That said, the usual question about p-values is <em>how low does it have to be?</em>
+            The answer, of course, is <em>it depends</em>. If you're a startup testing small copy
+            changes on a page, maybe a p-value of 10% is fine &mdash; better to move quickly and be
+            wrong 10% of the time. On the other hand, if you're testing a prototype of a page that
+            will take months to fully implement, maybe you want to wait for a p-value of 1% or 0.1%
+            before investing serious resources in the implementation. Unfortunately, the only
+            universal rule is that you have to use that squishy thing between your ears.</p>
+
+            <h3>What exactly do the confidence intervals mean?</h3>
+
+            <p>The goal of any experiment is to estimate some &quot;true&quot; information about the
+            real world given a limited amount of observed data. In the case of Abba, we want to
+            estimate the success rate of each group and the improvement of each group over the
+            baseline. We obviously don't expect these estimates to be exactly correct, but we do
+            expect them to get more accurate when we have more data.</p>
+
+            <p>A confidence interval is an attempt to quantify this effect. Roughly, it can be
+            thought of as a range of values that we can be reasonably confident includes the
+            &quot;true&quot; value. These are useful because they give more practical information
+            than a p-value and generally often more information than a p-value.</p>
+
+            <p>For example, a low p-value may tell us that a variation is confidently better than
+            the baseline, but the confidence interval on relative improvement could tell us that
+            it's confidently at least 10% better than the baseline, or perhaps no more than 10%
+            better, in which case we may choose to ignore the results anyway. On the flip side, a
+            high p-value may show that we need more data to conclude a variation is better than the
+            baseline, but the relative improvement confidence interval may tell us that we can
+            confidently expect no more than a 20% improvement. If that's too small an improvement,
+            we may choose to abandon the test and explore other ideas rather than wait for more data
+            to achieve a lower p-value. We can never conclude that two variations
+            have <em>exactly</em> the same success rate, but the relative improvement confidence
+            interval can give us bounds on how close they (probably) are. (Drawing such conclusions
+            does tend to require large sample sizes.)</p>
+
+            <p>More precisely, a 95% confidence interval means that if we were to run many such
+            experiments under the same conditions, about 95% of the time the confidence interval we
+            got would include the &quot;true&quot; value. If this sounds remniscent of p-values,
+            that's because the two are closely related. When the 95% confidence interval on relative
+            improvement has one of its limits at 0%, the p-value will equal 5%. (This isn't exactly
+            true in Abba because the p-value and the confidence interval are computed in slightly
+            different ways, but it should be nearly true in most cases.)</p>
+
+            <p>The relative improvement confidence intervals in Abba can generally be taken as
+            having 95% confidence level. This is a safe interpretation but isn't exactly true
+            because the confidence level is adjusted to account for multiple testing. The confidence
+            intervals on success rates are computed at a lower confidence level so that they
+            &quot;line up&quot; more nicely with the relative improvement interval and the
+            p-value. You can find more details below.</p>
+
+            <h3>Why is the success rate wrong?</h3>
+
+            <p>It may seem strange that the estimated success rate is not simply the number of
+            successes divided by the total number of trials. For small samples or small success
+            rates, the discrepancy can be substantial.</p>
+
+            <p>Suppose I flipped a coin once, got tails, and asked you to estimate the probability
+            that this coin lands heads up. You probably wouldn't give me 0% as your best
+            estimate. If I got five tails in a row, you probably still wouldn't give me 0% as your
+            best estimate, although you'd certainly estimate something closer to zero. In much the
+            same way, we &quot;smooth&quot; the estimated success rate towards 50% in such a way
+            that results for small samples or small success rates are less misleading (and the
+            generated confidence intervals, symmetric around the estimated value, are much higher
+            quality).</p>
+
+            <p>For large samples, this effect will usually be unnoticeable. And even for small
+            samples, the p-value and relative improvement confidence interval tend to be the more
+            important values to consider. If you need to use the success rate for small samples, you
+            can choose whether you want to use Abba's &quot;smoothed&quot; value or simple division
+            based on your own knowledge of the problem.</p>
+
+            <h3>Why do all of the results change when I add a trial?</h3>
+
+            <p>As explained above, Abba guards against results that are due purely to chance. In an
+            experiment where we test many groups against a single baseline, we're effectively
+            running many experiments at once. If we rely on the usual p-values and confidence
+            intervals, we're fooling ourselves into a false sense of security. The usual values
+            limit the risk of a false positive result for each individual group, but the risk of at
+            least one false positive from any group is larger. The more groups we test against the
+            baseline, the larger this risk grows.</p>
+
+            <p>To avoid this problem, the p-values and confidence intervals are automatically
+            adjusted based on the number of groups being compared to the baseline. The adjustment is
+            such that the confidence level of any conclusions drawn applies across all of the groups
+            present. More groups means higher p-values and wider confidence intervals. You can find
+            more precise details below.</p>
+
+            <h3>What are the underlying statistics?</h3>
+
+            <p>The estimated success rate and confidence interval are computed using the
+            <a href="http://en.wikipedia.org/wiki/Binomial_proportion_confidence_interval#Agresti-Coull_Interval">
+            Agresti-Coull interval</a> (also called the <em>adjusted Wald
+            interval</em>). The confidence interval on relative improvement is computed by treating
+            the success rates are normal random variables (in line with the assumptions of the
+            Agresti-Coull interval). The absolute improvement is then the difference of two normal
+            random variables, so that if the two success rates are \( S_1 \sim N(p_1, \sigma_1) \)
+            and \( S_2 \sim N(p_2, \sigma_2) \), then
+
+            \[
+            S_2 - S_1 \sim N \left( p_2 - p_1, \sqrt{\sigma_1^2 + \sigma_2^2} \right)
+            \]
+
+            The relative improvement simply divides all values by the estimated baseline success
+            rate.
+            </p>
+
+            <p>The confidence level for the relative improvement starts with a base confidence level
+            \( 1 - \alpha_\text{base} \) which is always 95% in this application. This is adjusted
+            for multiple testing using the simple
+            <a href="http://en.wikipedia.org/wiki/Bonferroni_correction">Bonferroni correction</a>:
+
+            \[
+            \alpha_\text{improvement} = \frac{\alpha_\text{base}}{N}
+            \]
+
+            for \( N \) tests. The confidence interval is made smaller for individual success rates
+            by adjusting the Z critical value:
+
+            \[
+            z_\text{success rate} = \frac{z_\text{improvement}}{\sqrt{2}}
+            \]
+
+            This is chosen so that the success rate confidence intervals correspond directly to the
+            improvement confidence interval, based on the formula above for computing the
+            improvement. If the two success rate intervals just touch at their bounds, then the
+            improvement interval will be bounded at zero.
+            </p>
+
+            <p>To compute the p-value, we use the difference of observed proportions \( p_2 - p_1 \)
+            as the test stastic and test the null hypothesis \( H_0: p_1 = p_2 \) against the
+            alternative \( H_1: p_1 \neq p_2 \). Note that we're using the observed proportion
+            directly here, not the estimated success rate described above. We always compute a
+            two-sided p-value, and we rely on the pooled proportion as in a pooled Z-test.</p>
+
+            <p>To account for multiple testing on an individual basis, if we have \( N \) groups to
+            test against the baseline, we pretend all \( N \) groups have the same data and compute
+            the probability that <em>any</em> group's test statistic is at least as extreme as the
+            observed value. This isn't entirely straightforward to compute. We could rely
+            on <a href="http://en.wikipedia.org/wiki/Boole%27s_inequality">Boole's inequality</a>
+            and use \( Np \), but this is far too conservative to be practical. If we treat the
+            tests as independent we could use
+
+            \[
+            p_\text{multiple tests} = 1 - \left( 1 - p_\text{single test} \right)^N,
+            \]
+
+            but because all of the tests share a single baseline group, they're not independent. In
+            fact, in the case of two groups, the test statistics are jointly normal with positive
+            covariance equal to the variance of the baseline success rate, \( p_\text{pooled} (1 -
+            p_\text{pooled}) / n_\text{baseline trials} \)(this probably generalizes to any number
+            of groups, but I don't have the chops to prove it). Unfortunately, I know of no good way
+            to compute approximations of the multivariate normal CDF, which is what we'd need to do
+            if we wanted to use this fact to compute p-values.</p>
+
+            <p>To get around that problem, we condition on the baseline success count \( B \). In that
+            situation (and treating total trial counts as nonrandom for all groups), the tests are
+            independent and we can rely on the above formula to get an exact conditional value. We
+            can then use the <a href="http://en.wikipedia.org/wiki/Law_of_total_probability">law of
+            total probability</a> to find the total p-value,
+
+            \[
+            p_\text{multiple tests} = \sum_{i=0}^{n_b}
+              \Bigl( 1 - \bigl( 1 - p_{\text{single test} | B=i} \bigr)^N \Bigr) \mathbb{P}(B=i),
+            \]
+
+            where \( n_b \) is the number of trials in the baseline group.</p>
+
+            <p>This scales like \( O(n_b) \) and can get very slow, so in practice we only iterate
+            over a \( 1 - \alpha \) confidence interval for \( B \) and then add \( \alpha \) to the
+            final result to get a conservative estimate (since \( \alpha \) is the total excluded
+            baseline probability mass, the excluded values can contribute no more than that to the
+            final p-value). This scales like \( O(\sqrt{n_b}) \) and seems to be plenty quick in
+            practice, and Abba currently uses \( \alpha = 10^{-5} \) so the precision is more than
+            good enough.</p>
+
+            <p>To compute the conditional p-values, we find the upper and lower success counts for
+            the variation group that would produce just as large of a difference in success rate as
+            that observed, given the (conditional) baseline count. We then compute the tail
+            probabilities using the (binomial) distribution of the variation group's success count
+            (again, relying on the pooled proportion). For small sample sizes (up to 100 trials) we
+            compute the binomial CDF directly; for larger samples we use the normal
+            approximation.</p>
         </section>
 
         <footer class="shadow">
@@ -72,6 +411,9 @@
             overall design and markup by Chris Mueller.</p>
         </footer>
 
+        <a href="http://github.com/thumbtack/abba">
+          <img style="position: absolute; top: 0; right: 0; border: 0;" src="https://camo.githubusercontent.com/365986a132ccd6a44c23a9169022c0b5c890c387/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f6769746875622f726962626f6e732f666f726b6d655f72696768745f7265645f6161303030302e706e67" alt="Fork me on GitHub" data-canonical-src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png">
+        </a>
         <iframe id="hidden-iframe" style="display: none;"></iframe>
     </body>
 </html>

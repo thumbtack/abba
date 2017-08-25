@@ -7,6 +7,6 @@ which demonstrates how to use the library. There's a Python version under `pytho
 on [PyPI](http://pypi.python.org/pypi/ABBA/).
 
 You can find a usable app and detailed documentation on the
-[live demo](http://www.thumbtack.com/labs/abba).
+[live demo][github-io-demo].
 
 [github-io-demo]: http://thumbtack.github.io/abba/demo/abba.html
